@@ -31,6 +31,14 @@ class G57Repository {
         require(clean.length in 3..24) { "Username must be 3-24 characters." }
         require(clean.all { it.isLetterOrDigit() || it == '_' || it == '-' }) { "Use letters, numbers, _ or -." }
 
+        val existing = sb.auth.currentUserOrNull()
+        if (existing != null) {
+            val existingProfile = runCatching { profile(existing.id) }.getOrNull()
+            if (existingProfile != null && existingProfile.role == "user" && existingProfile.username == clean) {
+                return existingProfile
+            }
+            runCatching { sb.auth.signOut() }
+        }
         sb.auth.signInAnonymously(
             data = buildJsonObject { put("username", clean) }
         )

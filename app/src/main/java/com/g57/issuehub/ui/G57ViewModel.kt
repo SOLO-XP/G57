@@ -214,6 +214,7 @@ class G57ViewModel(app: Application) : AndroidViewModel(app) {
         runCatching {
             val issue = repo.createIssue(
                 CreateIssueInput(
+                    userId = s.profile?.id ?: error("Not authenticated"),
                     title = s.title,
                     description = s.description,
                     problemType = s.problemType,
@@ -227,6 +228,8 @@ class G57ViewModel(app: Application) : AndroidViewModel(app) {
                     proton = s.proton.ifBlank { null },
                     vkd3d = s.vkd3d.ifBlank { null },
                     box64 = s.box64.ifBlank { null },
+                    gpu = "Mali-G57 MC2",
+                    soc = "Unknown",
                     androidVersion = "Android ${Build.VERSION.RELEASE} (API ${Build.VERSION.SDK_INT})",
                     deviceModel = "${Build.MANUFACTURER} ${Build.MODEL}"
                 )

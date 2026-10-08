@@ -3,6 +3,7 @@ package com.g57.issuehub
 import android.content.Intent
 import android.os.Bundle
 import androidx.activity.ComponentActivity
+import androidx.activity.compose.BackHandler
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.activity.compose.setContent
@@ -59,6 +60,8 @@ fun G57App(vm: G57ViewModel = viewModel()) {
             vm.clearOpenUrl()
         }
     }
+
+    BackHandler(enabled = ui.screen != ScreenState.Login) { vm.back() }
 
     MaterialTheme(
         colorScheme = darkColorScheme(
@@ -281,6 +284,7 @@ private fun IssueCard(issue: Issue, onClick: (Issue) -> Unit) {
             Text(issue.title, style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
             Spacer(Modifier.height(6.dp))
             Text("${issue.game} • ${issue.problemType}", color = Color.Gray)
+            if (issue.userUsername != null) Text("User: ${issue.userUsername}", color = G57Cyan, style = MaterialTheme.typography.bodySmall)
             Text("${issue.driver} • ${issue.emulator}", color = Color.Gray, style = MaterialTheme.typography.bodySmall)
         }
     }
@@ -369,6 +373,7 @@ private fun IssueDetails(issue: Issue, ui: UiState, vm: G57ViewModel, admin: Boo
             }
             Text(issue.title, style = MaterialTheme.typography.headlineSmall, fontWeight = FontWeight.Bold)
             Text(issue.description)
+            if (admin) Detail("User", issue.userUsername ?: issue.userId ?: "Unknown")
             Detail("Game", "${issue.game} ${issue.gameVersion.orEmpty()}")
             Detail("Problem", issue.problemType)
             Detail("Driver", issue.driver)

@@ -78,6 +78,15 @@ alter table public.issues enable row level security;
 alter table public.attachments enable row level security;
 alter table public.notifications enable row level security;
 
+-- Required PostgREST table privileges for authenticated users.
+-- Anonymous Supabase users use the authenticated database role.
+grant usage on schema public to authenticated;
+grant select on public.profiles to authenticated;
+grant select, insert, update, delete on public.issues to authenticated;
+grant select, insert, delete on public.attachments to authenticated;
+grant select, update on public.notifications to authenticated;
+
+
 create or replace function public.is_admin(uid uuid default auth.uid()) returns boolean
 language sql stable security definer set search_path = public
 as $$ select exists(select 1 from public.profiles p where p.id = uid and p.role = 'admin'); $$;

@@ -15,6 +15,7 @@ data class Issue(
     val id: String,
     @SerialName("issue_number") val issueNumber: Int,
     @SerialName("user_id") val userId: String? = null,
+    @SerialName("user_username") val userUsername: String? = null,
     val title: String,
     val description: String,
     @SerialName("problem_type") val problemType: String,

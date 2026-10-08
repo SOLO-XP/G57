@@ -150,16 +150,25 @@ create policy "issue files delete" on storage.objects for delete to authenticate
   )
 );
 
--- Auto-create profile after Auth signup.
+-- Auto-create profile after Auth signup, including username-only anonymous users.
 create or replace function public.handle_new_user()
 returns trigger language plpgsql security definer set search_path = public
-as $$
+as $
+declare
+  chosen_username text;
 begin
+  chosen_username := lower(trim(coalesce(
+    new.raw_user_meta_data->>'username',
+    case when new.email is not null then split_part(new.email, '@', 1) end,
+    'user-' || left(new.id::text, 8)
+  )));
+
   insert into public.profiles (id, username)
-  values (new.id, coalesce(new.raw_user_meta_data->>'username', split_part(new.email, '@', 1)));
+  values (new.id, chosen_username);
+
   return new;
 end;
-$$;
+$;
 
 drop trigger if exists on_auth_user_created on auth.users;
 create trigger on_auth_user_created
@@ -192,8 +201,14 @@ create trigger issue_resolved_notification
 after update of status on public.issues
 for each row execute procedure public.notify_issue_resolved();
 
--- IMPORTANT: Create the real admin in Supabase Auth first.
--- Use your private admin credentials only in Supabase Auth.
--- The app maps a username to the internal <username>@g57.app email.
+-- ADMIN SETUP:
+-- Create the real admin in Supabase Auth using an internal email:
+-- <admin_username>@g57.app
 -- Then promote that profile:
 -- update public.profiles set role = 'admin' where username = '<admin_username>';
+--
+-- USER ACCESS:
+-- The Android app uses Supabase Anonymous Sign-Ins. The user enters only
+-- a unique username; no email or password is shown or required.
+-- Enable Authentication -> Sign In / Providers -> Anonymous Sign-Ins
+-- in the Supabase dashboard before using username-only User access.

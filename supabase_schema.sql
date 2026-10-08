@@ -162,7 +162,7 @@ create policy "issue files delete" on storage.objects for delete to authenticate
 -- Auto-create profile after Auth signup, including username-only anonymous users.
 create or replace function public.handle_new_user()
 returns trigger language plpgsql security definer set search_path = public
-as $
+as $g57$
 declare
   chosen_username text;
 begin
@@ -177,7 +177,7 @@ begin
 
   return new;
 end;
-$;
+$g57$;
 
 drop trigger if exists on_auth_user_created on auth.users;
 create trigger on_auth_user_created

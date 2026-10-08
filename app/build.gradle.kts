@@ -28,8 +28,8 @@ android {
 
         val sbUrl = localProperties.getProperty("SUPABASE_URL", "")
         val sbKey = localProperties.getProperty("SUPABASE_PUBLISHABLE_KEY", "")
-        buildConfigField("String", "SUPABASE_URL", "\\"$sbUrl\\"")
-        buildConfigField("String", "SUPABASE_PUBLISHABLE_KEY", "\\"$sbKey\\"")
+        buildConfigField("String", "SUPABASE_URL", "\"$sbUrl\"")
+        buildConfigField("String", "SUPABASE_PUBLISHABLE_KEY", "\"$sbKey\"")
     }
 
     buildFeatures {

@@ -1,8 +1,18 @@
+import java.util.Properties
+
 plugins {
     id("com.android.application")
     id("org.jetbrains.kotlin.android")
     id("org.jetbrains.kotlin.plugin.compose")
     id("org.jetbrains.kotlin.plugin.serialization")
+}
+
+val localProperties = Properties()
+val localPropertiesFile = rootProject.file("local.properties")
+if (localPropertiesFile.exists()) {
+    localPropertiesFile.inputStream().use { input ->
+        localProperties.load(input)
+    }
 }
 
 android {
@@ -15,21 +25,16 @@ android {
         targetSdk = 36
         versionCode = 1
         versionName = "0.2.0"
+
+        val sbUrl = localProperties.getProperty("SUPABASE_URL", "")
+        val sbKey = localProperties.getProperty("SUPABASE_PUBLISHABLE_KEY", "")
+        buildConfigField("String", "SUPABASE_URL", ""$sbUrl"")
+        buildConfigField("String", "SUPABASE_PUBLISHABLE_KEY", ""$sbKey"")
     }
 
     buildFeatures {
         compose = true
         buildConfig = true
-    }
-
-    defaultConfig {
-        val local = project.rootProject.file("local.properties")
-        val props = java.util.Properties()
-        if (local.exists()) local.inputStream().use(props::load)
-        val sbUrl = props.getProperty("SUPABASE_URL", "")
-        val sbKey = props.getProperty("SUPABASE_PUBLISHABLE_KEY", "")
-        buildConfigField("String", "SUPABASE_URL", "\"$sbUrl\"")
-        buildConfigField("String", "SUPABASE_PUBLISHABLE_KEY", "\"$sbKey\"")
     }
 
     packaging {

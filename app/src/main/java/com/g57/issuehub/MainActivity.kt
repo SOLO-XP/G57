@@ -167,7 +167,6 @@ private fun UserHome(ui: UiState, vm: G57ViewModel) {
                 val unread = ui.notifications.count { it.readAt == null }
                 if (unread > 0) Text("🔔 $unread notification${if (unread == 1) "" else "s"}", color = G57Cyan)
             }
-            IconButton(onClick = vm::logout) { Icon(Icons.Default.Logout, contentDescription = "Logout") }
         }
         Spacer(Modifier.height(14.dp))
         Button(vm::openCreate, Modifier.fillMaxWidth().padding(horizontal = 20.dp), shape = RoundedCornerShape(18.dp)) {

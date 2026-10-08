@@ -277,12 +277,56 @@ private fun StatChip(name: String, count: Int) {
 
 @Composable
 private fun IssueList(issues: List<Issue>, onClick: (Issue) -> Unit, emptyText: String) {
-    if (issues.isEmpty()) {
-        Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) { Text(emptyText, color = Color.Gray) }
-        return
+    var selectedGroup by remember { mutableStateOf("All") }
+    val groups = listOf(
+        "All" to issues.size,
+        "Opened" to issues.count { it.status == "open" },
+        "Active" to issues.count { it.status in listOf("investigating", "fix_in_progress", "testing") },
+        "Fixed" to issues.count { it.status == "fixed" },
+        "Closed" to issues.count { it.status == "closed" }
+    )
+    val filtered = remember(issues, selectedGroup) {
+        val matching = when (selectedGroup) {
+            "Opened" -> issues.filter { it.status == "open" }
+            "Active" -> issues.filter { it.status in listOf("investigating", "fix_in_progress", "testing") }
+            "Fixed" -> issues.filter { it.status == "fixed" }
+            "Closed" -> issues.filter { it.status == "closed" }
+            else -> issues
+        }
+        matching.sortedWith(compareByDescending<Issue> { it.issueNumber })
     }
-    LazyColumn(contentPadding = PaddingValues(20.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
-        items(issues, key = { it.id }) { issue -> IssueCard(issue, onClick) }
+
+    Column(Modifier.fillMaxSize()) {
+        Row(
+            Modifier.fillMaxWidth().horizontalScroll(rememberScrollState()).padding(horizontal = 20.dp, vertical = 8.dp),
+            horizontalArrangement = Arrangement.spacedBy(8.dp)
+        ) {
+            groups.forEach { (name, count) ->
+                FilterChip(
+                    selected = selectedGroup == name,
+                    onClick = { selectedGroup = name },
+                    label = { Text("$name ($count)") },
+                    leadingIcon = if (selectedGroup == name) {
+                        { Icon(Icons.Default.Check, contentDescription = null, modifier = Modifier.size(16.dp)) }
+                    } else null
+                )
+            }
+        }
+        if (filtered.isEmpty()) {
+            Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+                Text(
+                    if (issues.isEmpty()) emptyText else "No issues in ${selectedGroup.lowercase()} yet.",
+                    color = Color.Gray
+                )
+            }
+        } else {
+            LazyColumn(
+                contentPadding = PaddingValues(start = 20.dp, end = 20.dp, top = 8.dp, bottom = 20.dp),
+                verticalArrangement = Arrangement.spacedBy(12.dp)
+            ) {
+                items(filtered, key = { it.id }) { issue -> IssueCard(issue, onClick) }
+            }
+        }
     }
 }
 
@@ -384,9 +428,21 @@ private fun IssueDetails(issue: Issue, ui: UiState, vm: G57ViewModel, admin: Boo
             Row(verticalAlignment = Alignment.CenterVertically) {
                 StatusBadge(issue.status)
                 Spacer(Modifier.weight(1f))
-                IconButton(onClick = { showDelete = true }) { Icon(Icons.Default.Delete, contentDescription = "Delete issue") }
             }
             Text(issue.title, style = MaterialTheme.typography.headlineSmall, fontWeight = FontWeight.Bold)
+            Button(
+                onClick = { showDelete = true },
+                modifier = Modifier.fillMaxWidth(),
+                colors = ButtonDefaults.buttonColors(
+                    containerColor = Color(0xFF7A2430),
+                    contentColor = Color.White
+                ),
+                shape = RoundedCornerShape(14.dp)
+            ) {
+                Icon(Icons.Default.DeleteForever, contentDescription = null)
+                Spacer(Modifier.width(8.dp))
+                Text(if (admin) "DELETE ISSUE (ADMIN)" else "DELETE MY ISSUE")
+            }
             Text(issue.description)
             if (admin) Detail("User", issue.userUsername ?: issue.userId ?: "Unknown")
             Detail("Game", "${issue.game} ${issue.gameVersion.orEmpty()}")

@@ -1,65 +1,81 @@
-# G57 — Mali GPU Issue Reporter
+# G57
 
-G57 is one Android app with two roles:
+**G57** is an Android application for reporting, organizing, and tracking problems related to **Mali GPU drivers and Android PC/emulator gaming environments**.
 
-- **User:** create Issues, upload screenshots/videos/logs, view only their own Issues, delete their own Issue, and receive an in-app notification when a developer resolves an Issue.
-- **Admin (developer):** from the same app, view all Issues, open all attachments, update status, write developer notes, delete Issues, and open the **Solved Users** list.
+The goal is simple: make it easy for users to send a complete, useful bug report so developers can reproduce and investigate problems faster.
 
-## User flow
+## What users can report
 
-`Login → Create Issue → Describe problem → Environment → Images / Video / Logs → Submit`
+Users can create an Issue and provide:
 
-The app automatically records the Android version and device model when a real Issue is submitted.
+- Game and game version
+- Mali GPU / device information
+- Mali driver version
+- Emulator or compatibility layer
+- DXVK version
+- Wine version
+- Proton version
+- VKD3D / Box64 information
+- Problem type such as crash, black screen, graphics problems, Vulkan errors, or performance issues
+- A clear description and reproduction steps
 
-## Admin flow
+## Attachments
 
-`Login → Admin Panel → All Issues → Issue details → Status / Developer Note / Attachments`
+An Issue can include supporting files such as:
 
-When the developer changes an Issue to **Fixed** or **Closed**, a database trigger creates a notification for that user. The user sees the notification when entering the app. The user also appears in **Solved Users**.
+- Screenshots
+- Videos
+- Log files
+- Text, JSON, ZIP, and other diagnostic files
 
-## Stack
+Each Issue keeps its attachments grouped together so developers can understand exactly which files belong to which report.
 
-- Android / Kotlin / Jetpack Compose
-- Supabase Auth + Postgres + Storage
-- Private `issue-files` bucket
+## User and developer access
+
+G57 uses one Android application with role-based access.
+
+**Users**
+- Create Issues
+- View and manage their own Issues
+- Upload diagnostic files
+- Receive notifications when their Issue is resolved
+
+**Developers / Admins**
+- View all submitted Issues
+- Review descriptions, device/environment information, logs, images, and videos
+- Update Issue status
+- Add developer notes
+- Manage Issues
+- View solved users
+
+Users cannot access other users' private Issues or attachments.
+
+## Issue lifecycle
+
+Issues can move through statuses such as:
+
+`Open → Investigating → Fix in Progress → Testing → Fixed → Closed`
+
+When a developer marks an Issue as solved, the affected user receives an in-app notification when they open G57.
+
+## Technology
+
+- Android
+- Kotlin
+- Jetpack Compose
+- Supabase Auth
+- PostgreSQL
+- Supabase Storage
 - PostgreSQL Row Level Security (RLS)
 
-## Real admin account
+## Cloud storage
 
-The requested admin credentials are:
+Issue attachments are stored in a private cloud bucket and associated with their Issue. Access is controlled by the application's authorization rules.
 
-- Username: `NOYSZ`
-- Password: `ZOG57`
+## Project goal
 
-Do **not** hardcode the production password into the APK. Create the Auth user in Supabase as `noysz@g57.app` with password `ZOG57`, then run:
+G57 is designed for the Mali GPU / emulator community, with a focus on making bug reports more complete, organized, and useful for driver and emulator developers.
 
-```sql
-update public.profiles set role = 'admin' where username = 'noysz';
-```
+---
 
-The `NOYSZ / ZOG57` login displayed in an unconfigured build is only an offline demo path and does not connect to Supabase.
-
-## Supabase setup
-
-1. Create a Supabase project.
-2. Run `supabase_schema.sql` in the SQL Editor.
-3. Create the `NOYSZ` Auth user and promote it with the SQL above.
-4. Create normal users from inside G57.
-5. Add the following to `local.properties`:
-
-```properties
-SUPABASE_URL=https://YOUR-PROJECT.supabase.co
-SUPABASE_PUBLISHABLE_KEY=YOUR-PUBLISHABLE-KEY
-```
-
-Never ship a Supabase service-role key inside the Android app. Use the publishable/anon key and RLS for authorization.
-
-## File handling
-
-The current MVP accepts images, videos, text/log/JSON/ZIP files up to 150 MB per file. Attachments are stored beneath the Issue UUID in a private bucket. Opening an attachment creates a short-lived signed URL.
-
-Supabase's current Kotlin Storage API supports file uploads, upload progress flows, resumable uploads, signed URLs, and file deletion; the next performance pass can replace the current ByteArray upload path with disk-backed resumable uploads for large videos.
-
-## Build
-
-Open the project in Android Studio and sync Gradle. The included GitHub Actions workflow can also build a debug APK in the cloud once this project is pushed to a GitHub repository.
+**G57 — Mali GPU Issue Reporter**

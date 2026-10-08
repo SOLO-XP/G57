@@ -6,6 +6,7 @@ import androidx.activity.ComponentActivity
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.activity.compose.setContent
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
@@ -22,6 +23,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.unit.dp
@@ -97,20 +99,39 @@ private fun BrandHeader(subtitle: String? = null, onBack: (() -> Unit)? = null) 
 
 @Composable
 private fun LoginScreen(ui: UiState, vm: G57ViewModel) {
-    Column(Modifier.fillMaxSize().padding(horizontal = 24.dp), verticalArrangement = Arrangement.Center) {
-        Text("G57", style = MaterialTheme.typography.displayMedium, fontWeight = FontWeight.ExtraBold, color = G57Primary)
+    Column(Modifier.fillMaxSize().padding(horizontal = 24.dp), verticalArrangement = Arrangement.Center, horizontalAlignment = Alignment.CenterHorizontally) {
+        Image(painterResource(com.g57.issuehub.R.drawable.g57_logo), "G57 logo", Modifier.size(112.dp))
+        Spacer(Modifier.height(12.dp))
+        Text("G57", style = MaterialTheme.typography.displaySmall, fontWeight = FontWeight.ExtraBold, color = G57Primary)
         Text("Mali GPU Issue Reporter", color = G57Cyan, style = MaterialTheme.typography.titleMedium)
-        Spacer(Modifier.height(28.dp))
+        Spacer(Modifier.height(24.dp))
+        Text("Choose access", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
+        Spacer(Modifier.height(10.dp))
+        Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+            RoleCard("USER", "Report & track issues", ui.loginRole == "user", { vm.setLoginRole("user") }, Modifier.weight(1f))
+            RoleCard("ADMIN", "Developer panel", ui.loginRole == "admin", { vm.setLoginRole("admin") }, Modifier.weight(1f))
+        }
+        Spacer(Modifier.height(20.dp))
         OutlinedTextField(ui.username, vm::setUsername, label = { Text("Username") }, singleLine = true, modifier = Modifier.fillMaxWidth())
         Spacer(Modifier.height(12.dp))
         OutlinedTextField(ui.password, vm::setPassword, label = { Text("Password") }, singleLine = true, visualTransformation = PasswordVisualTransformation(), modifier = Modifier.fillMaxWidth())
         Spacer(Modifier.height(18.dp))
-        Button(onClick = vm::login, enabled = !ui.loading, modifier = Modifier.fillMaxWidth()) { Text(if (ui.loading) "Signing in…" else "SIGN IN") }
-        Spacer(Modifier.height(8.dp))
-        OutlinedButton(onClick = vm::signup, enabled = !ui.loading, modifier = Modifier.fillMaxWidth()) { Text("CREATE USER ACCOUNT") }
+        Button(onClick = vm::login, enabled = !ui.loading, modifier = Modifier.fillMaxWidth(), shape = RoundedCornerShape(16.dp)) {
+            Text(if (ui.loading) "SIGNING IN…" else "SIGN IN")
+        }
         ui.error?.let { Text(it, color = MaterialTheme.colorScheme.error, modifier = Modifier.padding(top = 14.dp)) }
-        Spacer(Modifier.height(22.dp))
-        Text("Offline demo admin: NOYSZ / ZOG57", color = Color.Gray, style = MaterialTheme.typography.bodySmall)
+    }
+}
+
+@Composable
+private fun RoleCard(title: String, subtitle: String, selected: Boolean, onClick: () -> Unit, modifier: Modifier) {
+    Card(onClick = onClick, modifier = modifier, colors = CardDefaults.cardColors(containerColor = if (selected) G57Primary.copy(alpha = 0.22f) else G57Card), border = if (selected) androidx.compose.foundation.BorderStroke(1.dp, G57Primary) else null, shape = RoundedCornerShape(16.dp)) {
+        Column(Modifier.padding(14.dp), horizontalAlignment = Alignment.CenterHorizontally) {
+            Icon(if (title == "ADMIN") Icons.Default.AdminPanelSettings else Icons.Default.Person, null, tint = if (selected) G57Primary else G57Cyan)
+            Spacer(Modifier.height(6.dp))
+            Text(title, fontWeight = FontWeight.Bold)
+            Text(subtitle, color = Color.Gray, style = MaterialTheme.typography.labelSmall)
+        }
     }
 }
 

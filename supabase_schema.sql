@@ -193,8 +193,7 @@ after update of status on public.issues
 for each row execute procedure public.notify_issue_resolved();
 
 -- IMPORTANT: Create the real admin in Supabase Auth first.
--- Username: NOYSZ
--- Password: ZOG57
--- The app converts NOYSZ to the internal Auth email noysz@g57.app.
--- Then promote it:
--- update public.profiles set role = 'admin' where username = 'noysz';
+-- Use your private admin credentials only in Supabase Auth.
+-- The app maps a username to the internal <username>@g57.app email.
+-- Then promote that profile:
+-- update public.profiles set role = 'admin' where username = '<admin_username>';

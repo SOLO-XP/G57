@@ -33,11 +33,13 @@ class G57Repository {
 
         val existing = sb.auth.currentUserOrNull()
         if (existing != null) {
-            val existingProfile = runCatching { profile(existing.id) }.getOrNull()
-            if (existingProfile != null && existingProfile.role == "user" && existingProfile.username == clean) {
+            // Do not sign out when a profile request fails (for example, a temporary network error).
+            // Only replace the anonymous session after a successful lookup proves it belongs to another username/role.
+            val existingProfile = profile(existing.id)
+            if (existingProfile.role == "user" && existingProfile.username.equals(clean, ignoreCase = true)) {
                 return existingProfile
             }
-            runCatching { sb.auth.signOut() }
+            sb.auth.signOut()
         }
         sb.auth.signInAnonymously(
             data = buildJsonObject { put("username", clean) }

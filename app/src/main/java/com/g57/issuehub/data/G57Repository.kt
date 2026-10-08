@@ -1,9 +1,13 @@
 package com.g57.issuehub.data
 
+import io.github.jan.supabase.auth.auth
 import io.github.jan.supabase.auth.providers.builtin.Email
 import io.github.jan.supabase.postgrest.from
 import io.github.jan.supabase.postgrest.query.Columns
-import io.github.jan.supabase.storage.from
+import io.github.jan.supabase.postgrest.query.Order
+import io.github.jan.supabase.storage.storage
+import kotlinx.serialization.json.buildJsonObject
+import kotlinx.serialization.json.put
 import kotlin.time.Duration.Companion.minutes
 
 class G57Repository {
@@ -42,11 +46,11 @@ class G57Repository {
             .decodeSingle<Profile>()
 
     suspend fun allProfiles(): List<Profile> =
-        sb.from("profiles").select(Columns.ALL) { order("created_at", ascending = true) }
+        sb.from("profiles").select(Columns.ALL) { order(column = "created_at", order = Order.ASCENDING) }
             .decodeList()
 
     suspend fun myIssues(): List<Issue> =
-        sb.from("issues").select(Columns.ALL) { order("created_at", ascending = false) }
+        sb.from("issues").select(Columns.ALL) { order(column = "created_at", order = Order.DESCENDING) }
             .decodeList()
 
     suspend fun allIssues(): List<Issue> =

@@ -1,11 +1,9 @@
 package com.g57.issuehub.data
 
 import io.github.jan.supabase.auth.auth
-import io.github.jan.supabase.auth.auth
 import io.github.jan.supabase.auth.providers.builtin.Email
 import io.github.jan.supabase.postgrest.from
 import io.github.jan.supabase.postgrest.query.Columns
-import io.github.jan.supabase.postgrest.query.Order
 import io.github.jan.supabase.postgrest.query.Order
 import io.github.jan.supabase.storage.storage
 import kotlinx.serialization.json.buildJsonObject
@@ -34,7 +32,7 @@ class G57Repository {
         sb.auth.signUpWith(Email) {
             this.email = email
             this.password = password
-            data = kotlinx.serialization.json.buildJsonObject { put("username", clean) }
+            data = buildJsonObject { put("username", clean) }
         }
         val userId = sb.auth.currentUserOrNull()?.id
             ?: error("Account created. Check your email if confirmation is enabled.")

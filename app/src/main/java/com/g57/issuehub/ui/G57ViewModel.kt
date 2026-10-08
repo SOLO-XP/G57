@@ -71,11 +71,6 @@ class G57ViewModel(app: Application) : AndroidViewModel(app) {
     private val _ui = MutableStateFlow(UiState())
     val ui: StateFlow<UiState> = _ui.asStateFlow()
 
-    // Only used when no Supabase credentials exist, so the APK can preview the UI offline.
-    // The real admin account must be created in Supabase and assigned role=admin.
-    private val demoAdminUser = "NOYSZ"
-    private val demoAdminPass = "ZOG57"
-
     fun setUsername(v: String) = update { copy(username = v, error = null) }
     fun setPassword(v: String) = update { copy(password = v, error = null) }
     fun setField(field: String, v: String) = update {
@@ -101,26 +96,51 @@ class G57ViewModel(app: Application) : AndroidViewModel(app) {
         val u = _ui.value.username.trim()
         val p = _ui.value.password
         val requestedRole = _ui.value.loginRole
-        if (u.isBlank() || p.isBlank()) {
-            update { copy(error = "Enter username and password.") }
+
+        if (u.isBlank()) {
+            update { copy(error = "Enter a username.") }
+            return@launch
+        }
+        if (requestedRole == "admin" && p.isBlank()) {
+            update { copy(error = "Enter the admin password.") }
             return@launch
         }
         if (!SupabaseProvider.enabled) {
             update { copy(error = "Cloud database is not configured in this build.") }
             return@launch
         }
+
         update { copy(loading = true, error = null, success = null) }
-        runCatching { repo.signIn(u, p) }
-            .onSuccess { profile ->
-                if (profile.role != requestedRole) {
-                    runCatching { repo.signOut() }
-                    update { copy(loading = false, error = "This account is not registered as $requestedRole.") }
-                    return@onSuccess
-                }
-                update { copy(loading = false, profile = profile, screen = if (profile.role == "admin") ScreenState.AdminHome else ScreenState.UserHome) }
-                if (profile.role == "admin") loadIssues(true) else loadUserData(profile.id)
+
+        runCatching {
+            if (requestedRole == "admin") repo.signInAdmin(u, p)
+            else repo.enterUser(u)
+        }.onSuccess { profile ->
+            if (profile.role != requestedRole) {
+                runCatching { repo.signOut() }
+                update { copy(loading = false, error = "This account is not registered as $requestedRole.") }
+                return@onSuccess
             }
-            .onFailure { e -> update { copy(loading = false, error = e.message ?: "Sign in failed") } }
+            update {
+                copy(
+                    loading = false,
+                    password = "",
+                    profile = profile,
+                    screen = if (profile.role == "admin") ScreenState.AdminHome else ScreenState.UserHome
+                )
+            }
+            if (profile.role == "admin") loadIssues(true) else loadUserData(profile.id)
+        }.onFailure { e ->
+            val raw = e.message.orEmpty()
+            val friendly = if (requestedRole == "user" &&
+                (raw.contains("duplicate", true) || raw.contains("unique", true) || raw.contains("already", true) || raw.contains("taken", true))
+            ) "Username already taken. Choose another username."
+            else raw.ifBlank { "Sign in failed" }
+            runCatching {
+                if (requestedRole == "user") repo.signOut()
+            }
+            update { copy(loading = false, error = friendly) }
+        }
     }
 
     fun loadUserData(userId: String) = viewModelScope.launch {

@@ -91,7 +91,22 @@ fun G57App(vm: G57ViewModel = viewModel()) {
 private fun BrandHeader(subtitle: String? = null, onBack: (() -> Unit)? = null) {
     Row(Modifier.fillMaxWidth().padding(20.dp), verticalAlignment = Alignment.CenterVertically) {
         if (onBack != null) {
-            IconButton(onClick = onBack) { Icon(Icons.Default.ArrowBack, contentDescription = "Back") }
+            Surface(
+                onClick = onBack,
+                shape = RoundedCornerShape(14.dp),
+                color = G57Primary,
+                contentColor = Color(0xFF080A0F),
+                modifier = Modifier.padding(end = 12.dp)
+            ) {
+                Row(
+                    modifier = Modifier.padding(horizontal = 14.dp, vertical = 11.dp),
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(7.dp)
+                ) {
+                    Icon(Icons.Default.ArrowBack, contentDescription = null, modifier = Modifier.size(20.dp))
+                    Text("BACK", fontWeight = FontWeight.ExtraBold, style = MaterialTheme.typography.labelLarge)
+                }
+            }
         }
         Column(Modifier.weight(1f)) {
             Text("G57", style = MaterialTheme.typography.headlineMedium, fontWeight = FontWeight.ExtraBold, color = G57Primary)

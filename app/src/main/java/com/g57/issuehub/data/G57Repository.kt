@@ -1,9 +1,11 @@
 package com.g57.issuehub.data
 
 import io.github.jan.supabase.auth.auth
+import io.github.jan.supabase.auth.auth
 import io.github.jan.supabase.auth.providers.builtin.Email
 import io.github.jan.supabase.postgrest.from
 import io.github.jan.supabase.postgrest.query.Columns
+import io.github.jan.supabase.postgrest.query.Order
 import io.github.jan.supabase.postgrest.query.Order
 import io.github.jan.supabase.storage.storage
 import kotlinx.serialization.json.buildJsonObject
@@ -54,7 +56,7 @@ class G57Repository {
             .decodeList()
 
     suspend fun allIssues(): List<Issue> =
-        sb.from("issues").select(Columns.ALL) { order("created_at", ascending = false) }
+        sb.from("issues").select(Columns.ALL) { order(column = "created_at", order = Order.DESCENDING) }
             .decodeList()
 
     suspend fun resolvedIssues(): List<Issue> =
@@ -63,13 +65,13 @@ class G57Repository {
     suspend fun attachments(issueId: String): List<Attachment> =
         sb.from("attachments").select(Columns.ALL) {
             filter { eq("issue_id", issueId) }
-            order("created_at", ascending = true)
+            order(column = "created_at", order = Order.ASCENDING)
         }.decodeList()
 
     suspend fun notifications(userId: String): List<Notification> =
         sb.from("notifications").select(Columns.ALL) {
             filter { eq("user_id", userId) }
-            order("created_at", ascending = false)
+            order(column = "created_at", order = Order.DESCENDING)
         }.decodeList()
 
     suspend fun createIssue(input: CreateIssueInput): Issue =

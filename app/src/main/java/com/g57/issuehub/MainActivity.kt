@@ -259,14 +259,15 @@ private fun StatusBadge(status: String) {
 @Composable
 private fun CreateIssueScreen(ui: UiState, vm: G57ViewModel) {
     val scroll = rememberScrollState()
+    val context = LocalContext.current
     val imagePicker = rememberLauncherForActivityResult(ActivityResultContracts.OpenMultipleDocuments()) { uris ->
-        vm.addFiles(readPickedFiles(uris, "image", LocalContext.current))
+        vm.addFiles(readPickedFiles(uris, "image", context))
     }
     val videoPicker = rememberLauncherForActivityResult(ActivityResultContracts.OpenMultipleDocuments()) { uris ->
-        vm.addFiles(readPickedFiles(uris, "video", LocalContext.current))
+        vm.addFiles(readPickedFiles(uris, "video", context))
     }
     val logPicker = rememberLauncherForActivityResult(ActivityResultContracts.OpenMultipleDocuments()) { uris ->
-        vm.addFiles(readPickedFiles(uris, "log", LocalContext.current))
+        vm.addFiles(readPickedFiles(uris, "log", context))
     }
 
     Column(Modifier.fillMaxSize()) {

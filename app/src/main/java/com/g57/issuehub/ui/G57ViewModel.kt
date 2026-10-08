@@ -6,6 +6,7 @@ import android.os.Build
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
 import com.g57.issuehub.data.*
+import io.github.jan.supabase.auth.auth
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -93,6 +94,7 @@ class G57ViewModel(app: Application) : AndroidViewModel(app) {
         }
     }
 
+    fun setLoginRole(role: String) = update { copy(loginRole = role, password = "", error = null) }
     fun setUsername(v: String) = update { copy(username = v, error = null) }
     fun setPassword(v: String) = update { copy(password = v, error = null) }
     fun setField(field: String, v: String) = update {

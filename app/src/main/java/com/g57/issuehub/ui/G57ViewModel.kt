@@ -154,15 +154,13 @@ class G57ViewModel(app: Application) : AndroidViewModel(app) {
                 )
             }
             if (profile.role == "admin") loadIssues(true) else loadUserData(profile.id)
-        }.onFailure { e ->
-            val raw = e.message.orEmpty()
-            val friendly = if (requestedRole == "user" &&
-                (raw.contains("duplicate", true) || raw.contains("unique", true) || raw.contains("already", true) || raw.contains("taken", true))
-            ) "Username already taken. Choose another username."
-            else raw.ifBlank { "Sign in failed" }
-            runCatching {
-                if (requestedRole == "user") repo.signOut()
+        }.onFailure {
+            val friendly = if (requestedRole == "admin") {
+                "Invalid username or password."
+            } else {
+                "Unable to enter with this username. Please try another username."
             }
+            runCatching { repo.signOut() }
             update { copy(loading = false, error = friendly) }
         }
     }
@@ -278,8 +276,13 @@ class G57ViewModel(app: Application) : AndroidViewModel(app) {
                     deviceModel = "${Build.MANUFACTURER} ${Build.MODEL}"
                 )
             )
-            uploadFiles(issue.id, s.selectedFiles)
-            issue
+            try {
+                uploadFiles(issue.id, s.selectedFiles)
+                issue
+            } catch (uploadError: Throwable) {
+                runCatching { repo.deleteIssue(issue.id) }
+                throw IllegalStateException("Issue was not sent because an attachment failed to upload. Please check the file and try again.", uploadError)
+            }
         }.onSuccess { issue ->
             update {
                 copy(
@@ -301,7 +304,7 @@ class G57ViewModel(app: Application) : AndroidViewModel(app) {
         for (file in files) {
             resolver.openInputStream(file.uri)?.use { input ->
                 repo.uploadAttachment(issueId, file.name, file.mime, input.readBytes(), file.type)
-            } ?: error("Unable to read ${file.name}")
+            } ?: error("Unable to read ${file.name}. Please choose the file again.")
         }
     }
 

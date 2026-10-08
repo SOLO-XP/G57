@@ -422,8 +422,8 @@ class G57ViewModel(app: Application) : AndroidViewModel(app) {
     private fun update(block: UiState.() -> UiState) { _ui.value = _ui.value.block() }
 
     private fun demoIssues(): List<Issue> = listOf(
-        Issue("demo-482", 482, "demo-user", "GTA IV crashes after entering gameplay", "Game launches successfully, then crashes after entering gameplay.", "Crash", "open", "GTA IV", driver = "Mali 26.2", emulator = "Winlator 10.1", dxvk = "2.4.1", wine = "9.2", gpu = "Mali-G57 MC2", soc = "Dimensity 6100+", androidVersion = "Android 15"),
-        Issue("demo-481", 481, "demo-user2", "Black textures in Call of Duty", "Textures become black while the game remains responsive.", "Graphics", "investigating", "Call of Duty Black Ops", driver = "Mali 26.2", emulator = "GameHub", dxvk = "2.4.1", wine = "9.2", gpu = "Mali-G57 MC2", soc = "Helio G99", androidVersion = "Android 14"),
-        Issue("demo-480", 480, "demo-user3", "Vulkan device lost during loading", "The emulator reports a Vulkan device loss during map loading.", "Vulkan Error", "testing", "Skyrim", driver = "Mali 26.2", emulator = "Winlator", dxvk = "1.10.3", wine = "9.2", gpu = "Mali-G57 MC2", androidVersion = "Android 15")
+        Issue("demo-482", 482, "demo-user", null, "GTA IV crashes after entering gameplay", "Game launches successfully, then crashes after entering gameplay.", "Crash", "open", "GTA IV", driver = "Mali 26.2", emulator = "Winlator 10.1", dxvk = "2.4.1", wine = "9.2", gpu = "Mali-G57 MC2", soc = "Dimensity 6100+", androidVersion = "Android 15"),
+        Issue("demo-481", 481, "demo-user2", null, "Black textures in Call of Duty", "Textures become black while the game remains responsive.", "Graphics", "investigating", "Call of Duty Black Ops", driver = "Mali 26.2", emulator = "GameHub", dxvk = "2.4.1", wine = "9.2", gpu = "Mali-G57 MC2", soc = "Helio G99", androidVersion = "Android 14"),
+        Issue("demo-480", 480, "demo-user3", null, "Vulkan device lost during loading", "The emulator reports a Vulkan device loss during map loading.", "Vulkan Error", "testing", "Skyrim", driver = "Mali 26.2", emulator = "Winlator", dxvk = "1.10.3", wine = "9.2", gpu = "Mali-G57 MC2", androidVersion = "Android 15")
     )
 }

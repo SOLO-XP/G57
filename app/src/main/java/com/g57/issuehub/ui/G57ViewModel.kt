@@ -40,6 +40,7 @@ data class UiState(
     val screen: ScreenState = ScreenState.Login,
     val username: String = "",
     val password: String = "",
+    val loginRole: String = "user",
     val loading: Boolean = false,
     val error: String? = null,
     val success: String? = null,
@@ -99,49 +100,27 @@ class G57ViewModel(app: Application) : AndroidViewModel(app) {
     fun login() = viewModelScope.launch {
         val u = _ui.value.username.trim()
         val p = _ui.value.password
-        if (u.equals(demoAdminUser, true) && p == demoAdminPass && !SupabaseProvider.enabled) {
-            update {
-                copy(
-                    loading = false,
-                    screen = ScreenState.AdminHome,
-                    profile = Profile("demo-admin", "NOYSZ", "admin"),
-                    success = "Demo Admin mode"
-                )
-            }
-            loadIssues(true)
+        val requestedRole = _ui.value.loginRole
+        if (u.isBlank() || p.isBlank()) {
+            update { copy(error = "Enter username and password.") }
             return@launch
         }
         if (!SupabaseProvider.enabled) {
-            update { copy(error = "Supabase is not configured. Demo admin: NOYSZ / ZOG57") }
+            update { copy(error = "Cloud database is not configured in this build.") }
             return@launch
         }
         update { copy(loading = true, error = null, success = null) }
         runCatching { repo.signIn(u, p) }
             .onSuccess { profile ->
-                update {
-                    copy(
-                        loading = false,
-                        profile = profile,
-                        screen = if (profile.role == "admin") ScreenState.AdminHome else ScreenState.UserHome
-                    )
+                if (profile.role != requestedRole) {
+                    runCatching { repo.signOut() }
+                    update { copy(loading = false, error = "This account is not registered as $requestedRole.") }
+                    return@onSuccess
                 }
+                update { copy(loading = false, profile = profile, screen = if (profile.role == "admin") ScreenState.AdminHome else ScreenState.UserHome) }
                 if (profile.role == "admin") loadIssues(true) else loadUserData(profile.id)
             }
-            .onFailure { e -> update { copy(loading = false, error = e.message ?: "Login failed") } }
-    }
-
-    fun signup() = viewModelScope.launch {
-        if (!SupabaseProvider.enabled) {
-            update { copy(error = "Connect Supabase first to create user accounts.") }
-            return@launch
-        }
-        update { copy(loading = true, error = null) }
-        runCatching { repo.signUp(_ui.value.username, _ui.value.password) }
-            .onSuccess { profile ->
-                update { copy(loading = false, profile = profile, screen = ScreenState.UserHome, success = "Account created") }
-                loadUserData(profile.id)
-            }
-            .onFailure { e -> update { copy(loading = false, error = e.message ?: "Sign-up failed") } }
+            .onFailure { e -> update { copy(loading = false, error = e.message ?: "Sign in failed") } }
     }
 
     fun loadUserData(userId: String) = viewModelScope.launch {

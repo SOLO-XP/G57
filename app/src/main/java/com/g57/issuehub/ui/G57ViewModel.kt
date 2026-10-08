@@ -71,6 +71,28 @@ class G57ViewModel(app: Application) : AndroidViewModel(app) {
     private val _ui = MutableStateFlow(UiState())
     val ui: StateFlow<UiState> = _ui.asStateFlow()
 
+    init {
+        restoreSession()
+    }
+
+    private fun restoreSession() = viewModelScope.launch {
+        if (!SupabaseProvider.enabled) return@launch
+        runCatching {
+            val user = SupabaseProvider.client.auth.currentUserOrNull() ?: return@runCatching null
+            repo.profile(user.id)
+        }.onSuccess { profile ->
+            profile ?: return@onSuccess
+            update {
+                copy(
+                    username = profile.username,
+                    profile = profile,
+                    screen = if (profile.role == "admin") ScreenState.AdminHome else ScreenState.UserHome
+                )
+            }
+            if (profile.role == "admin") loadIssues(true) else loadUserData(profile.id)
+        }
+    }
+
     fun setUsername(v: String) = update { copy(username = v, error = null) }
     fun setPassword(v: String) = update { copy(password = v, error = null) }
     fun setField(field: String, v: String) = update {

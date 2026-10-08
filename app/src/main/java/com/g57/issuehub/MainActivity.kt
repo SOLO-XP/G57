@@ -112,12 +112,28 @@ private fun LoginScreen(ui: UiState, vm: G57ViewModel) {
             RoleCard("ADMIN", "Developer panel", ui.loginRole == "admin", { vm.setLoginRole("admin") }, Modifier.weight(1f))
         }
         Spacer(Modifier.height(20.dp))
-        OutlinedTextField(ui.username, vm::setUsername, label = { Text("Username") }, singleLine = true, modifier = Modifier.fillMaxWidth())
-        Spacer(Modifier.height(12.dp))
-        OutlinedTextField(ui.password, vm::setPassword, label = { Text("Password") }, singleLine = true, visualTransformation = PasswordVisualTransformation(), modifier = Modifier.fillMaxWidth())
+        OutlinedTextField(
+            ui.username,
+            vm::setUsername,
+            label = { Text("Username") },
+            supportingText = { Text(if (ui.loginRole == "user") "Choose a unique username" else "Admin username") },
+            singleLine = true,
+            modifier = Modifier.fillMaxWidth()
+        )
+        if (ui.loginRole == "admin") {
+            Spacer(Modifier.height(12.dp))
+            OutlinedTextField(
+                ui.password,
+                vm::setPassword,
+                label = { Text("Password") },
+                singleLine = true,
+                visualTransformation = PasswordVisualTransformation(),
+                modifier = Modifier.fillMaxWidth()
+            )
+        }
         Spacer(Modifier.height(18.dp))
         Button(onClick = vm::login, enabled = !ui.loading, modifier = Modifier.fillMaxWidth(), shape = RoundedCornerShape(16.dp)) {
-            Text(if (ui.loading) "SIGNING IN…" else "SIGN IN")
+            Text(if (ui.loading) "ENTERING…" else if (ui.loginRole == "user") "ENTER" else "SIGN IN")
         }
         ui.error?.let { Text(it, color = MaterialTheme.colorScheme.error, modifier = Modifier.padding(top = 14.dp)) }
     }

@@ -7,6 +7,8 @@ import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
 import com.g57.issuehub.data.*
 import io.github.jan.supabase.auth.auth
+import io.github.jan.supabase.auth.status.SessionStatus
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -78,7 +80,9 @@ class G57ViewModel(app: Application) : AndroidViewModel(app) {
 
     private fun restoreSession() = viewModelScope.launch {
         if (!SupabaseProvider.enabled) return@launch
+        // Wait until Supabase has finished loading the saved session before checking the current user.
         runCatching {
+            SupabaseProvider.client.auth.sessionStatus.first { it !is SessionStatus.Initializing }
             val user = SupabaseProvider.client.auth.currentUserOrNull() ?: return@runCatching null
             repo.profile(user.id)
         }.onSuccess { profile ->
@@ -87,10 +91,14 @@ class G57ViewModel(app: Application) : AndroidViewModel(app) {
                 copy(
                     username = profile.username,
                     profile = profile,
-                    screen = if (profile.role == "admin") ScreenState.AdminHome else ScreenState.UserHome
+                    screen = if (profile.role == "admin") ScreenState.AdminHome else ScreenState.UserHome,
+                    error = null
                 )
             }
             if (profile.role == "admin") loadIssues(true) else loadUserData(profile.id)
+        }.onFailure {
+            // Preserve the auth session. A temporary cloud/profile error must not look like a forced logout.
+            update { copy(error = "Couldn't restore your session from the cloud. Check your connection and try again; you have not been signed out.") }
         }
     }
 
@@ -160,7 +168,7 @@ class G57ViewModel(app: Application) : AndroidViewModel(app) {
             } else {
                 "Unable to enter with this username. Please try another username."
             }
-            runCatching { repo.signOut() }
+            // Keep any existing session intact when a login/profile request fails.
             update { copy(loading = false, error = friendly) }
         }
     }

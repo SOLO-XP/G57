@@ -13,7 +13,12 @@ object SupabaseProvider {
         supabaseUrl = BuildConfig.SUPABASE_URL.ifBlank { "https://invalid.local" },
         supabaseKey = BuildConfig.SUPABASE_PUBLISHABLE_KEY.ifBlank { "demo" }
     ) {
-        install(Auth)
+        install(Auth) {
+            // Keep the user's Supabase session across app restarts and refresh it when needed.
+            autoLoadFromStorage = true
+            autoSaveToStorage = true
+            alwaysAutoRefresh = true
+        }
         install(Postgrest)
         install(Storage)
     }

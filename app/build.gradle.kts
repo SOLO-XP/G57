@@ -26,8 +26,8 @@ android {
         versionCode = 1
         versionName = "0.2.0"
 
-        val sbUrl = localProperties.getProperty("SUPABASE_URL", "")
-        val sbKey = localProperties.getProperty("SUPABASE_PUBLISHABLE_KEY", "")
+        val sbUrl = localProperties.getProperty("SUPABASE_URL", System.getenv("SUPABASE_URL") ?: "")
+        val sbKey = localProperties.getProperty("SUPABASE_PUBLISHABLE_KEY", System.getenv("SUPABASE_PUBLISHABLE_KEY") ?: "")
         buildConfigField("String", "SUPABASE_URL", "\"$sbUrl\"")
         buildConfigField("String", "SUPABASE_PUBLISHABLE_KEY", "\"$sbKey\"")
     }

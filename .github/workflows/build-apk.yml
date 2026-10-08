@@ -69,9 +69,47 @@ jobs:
       - name: Build debug APK
         run: gradle :app:assembleDebug --stacktrace
 
-      - name: Upload APK
+      - name: Verify APK integrity, package metadata, and signature
+        shell: bash
+        run: |
+          set -euo pipefail
+          APK="app/build/outputs/apk/debug/app-debug.apk"
+          APKSIGNER="$ANDROID_SDK_ROOT/build-tools/36.0.0/apksigner"
+          AAPT="$ANDROID_SDK_ROOT/build-tools/36.0.0/aapt"
+
+          test -s "$APK"
+          echo "APK size:"
+          stat -c '%s bytes' "$APK"
+
+          echo "Checking ZIP/APK structure..."
+          unzip -t "$APK"
+
+          echo "Checking APK signature..."
+          "$APKSIGNER" verify --verbose --print-certs "$APK"
+
+          echo "Checking package name and version..."
+          "$AAPT" dump badging "$APK" | tee apk-badging.txt
+          grep -F "package: name='com.g57.issuehub' versionCode='5' versionName='0.2.4'" apk-badging.txt
+
+          sha256sum "$APK" | tee app-debug.apk.sha256
+          {
+            echo "### Verified G57 APK"
+            echo ""
+            echo "- Package: `com.g57.issuehub`"
+            echo "- Version: `0.2.4 (5)`"
+            echo "- APK size: $(stat -c '%s bytes' "$APK")"
+            echo "- SHA-256: `$(sha256sum "$APK" | cut -d ' ' -f 1)`"
+            echo "- ZIP structure: passed"
+            echo "- APK signature: passed"
+          } >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Upload verified APK and checksum
         uses: actions/upload-artifact@v4
         with:
-          name: G57-debug-apk
-          path: app/build/outputs/apk/debug/app-debug.apk
+          name: G57-v0.2.4-verified-apk
+          path: |
+            app/build/outputs/apk/debug/app-debug.apk
+            app-debug.apk.sha256
+            apk-badging.txt
           if-no-files-found: error
+          compression-level: 0

@@ -13,8 +13,11 @@ import kotlin.time.Duration.Companion.minutes
 class G57Repository {
     private val sb = SupabaseProvider.client
 
-    suspend fun signIn(username: String, password: String): Profile {
-        val email = username.trim().lowercase() + "@g57.app"
+    suspend fun signInAdmin(username: String, password: String): Profile {
+        val clean = username.trim().lowercase()
+        require(clean.length in 3..24) { "Username must be 3-24 characters." }
+        require(clean.all { it.isLetterOrDigit() || it == '_' || it == '-' }) { "Use letters, numbers, _ or -." }
+        val email = "$clean@g57.app"
         sb.auth.signInWith(Email) {
             this.email = email
             this.password = password
@@ -23,19 +26,15 @@ class G57Repository {
         return profile(userId)
     }
 
-    suspend fun signUp(username: String, password: String): Profile {
+    suspend fun enterUser(username: String): Profile {
         val clean = username.trim().lowercase()
         require(clean.length in 3..24) { "Username must be 3-24 characters." }
         require(clean.all { it.isLetterOrDigit() || it == '_' || it == '-' }) { "Use letters, numbers, _ or -." }
-        require(password.length >= 6) { "Password must be at least 6 characters." }
-        val email = "$clean@g57.app"
-        sb.auth.signUpWith(Email) {
-            this.email = email
-            this.password = password
+
+        sb.auth.signInAnonymously(
             data = buildJsonObject { put("username", clean) }
-        }
-        val userId = sb.auth.currentUserOrNull()?.id
-            ?: error("Account created. Check your email if confirmation is enabled.")
+        )
+        val userId = sb.auth.currentUserOrNull()?.id ?: error("No anonymous user session")
         return profile(userId)
     }
 

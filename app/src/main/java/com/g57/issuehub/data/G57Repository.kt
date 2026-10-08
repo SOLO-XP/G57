@@ -52,9 +52,11 @@ class G57Repository {
         sb.from("issues").select(Columns.ALL) { order(column = "created_at", order = Order.DESCENDING) }
             .decodeList()
 
-    suspend fun allIssues(): List<Issue> =
-        sb.from("issues").select(Columns.ALL) { order(column = "created_at", order = Order.DESCENDING) }
-            .decodeList()
+    suspend fun allIssues(): List<Issue> {
+        val issues = sb.from("issues").select(Columns.ALL) { order(column = "created_at", order = Order.DESCENDING) }.decodeList<Issue>()
+        val profiles = allProfiles().associateBy { it.id }
+        return issues.map { issue -> issue.copy(userUsername = issue.userId?.let { profiles[it]?.username }) }
+    }
 
     suspend fun resolvedIssues(): List<Issue> =
         allIssues().filter { it.status == "fixed" || it.status == "closed" }
@@ -75,15 +77,15 @@ class G57Repository {
         sb.from("issues").insert(input) { select() }.decodeSingle()
 
     suspend fun updateStatus(issueId: String, status: String) {
-        sb.from("issues").update(mapOf("status" to status)) { filter { eq("id", issueId) } }
+        sb.from("issues").update(buildJsonObject { put("status", status) }) { filter { eq("id", issueId) } }
     }
 
     suspend fun updateDeveloperNote(issueId: String, note: String) {
-        sb.from("issues").update(mapOf("developer_note" to note)) { filter { eq("id", issueId) } }
+        sb.from("issues").update(buildJsonObject { put("developer_note", note) }) { filter { eq("id", issueId) } }
     }
 
     suspend fun markNotificationRead(notificationId: String) {
-        sb.from("notifications").update(mapOf("read_at" to java.time.Instant.now().toString())) {
+        sb.from("notifications").update(buildJsonObject { put("read_at", java.time.Instant.now().toString()) }) {
             filter { eq("id", notificationId) }
         }
     }
@@ -100,16 +102,14 @@ class G57Repository {
         sb.storage.from("issue-files").upload(path, bytes) {
             upsert = false
         }
-        sb.from("attachments").insert(
-            mapOf(
-                "issue_id" to issueId,
-                "type" to type,
-                "filename" to filename,
-                "storage_path" to path,
-                "mime_type" to mime,
-                "size" to bytes.size.toLong()
-            )
-        )
+        sb.from("attachments").insert(buildJsonObject {
+            put("issue_id", issueId)
+            put("type", type)
+            put("filename", filename)
+            put("storage_path", path)
+            put("mime_type", mime)
+            put("size", bytes.size.toLong())
+        })
         return path
     }
 

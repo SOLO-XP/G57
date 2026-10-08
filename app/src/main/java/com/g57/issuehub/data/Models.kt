@@ -62,6 +62,7 @@ data class Notification(
 
 @Serializable
 data class CreateIssueInput(
+    @SerialName("user_id") val userId: String,
     val title: String,
     val description: String,
     @SerialName("problem_type") val problemType: String,

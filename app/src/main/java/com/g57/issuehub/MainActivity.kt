@@ -83,6 +83,7 @@ fun G57App(vm: G57ViewModel = viewModel()) {
                 ScreenState.AdminHome -> AdminHome(ui, vm)
                 ScreenState.AdminSolvedUsers -> AdminSolvedUsers(ui, vm)
                 ScreenState.AdminUserManagement -> AdminUserManagementScreen(ui, vm)
+                ScreenState.CreatorPassword -> CreatorPasswordScreen(ui, vm)
                 ScreenState.DriverDevelopers -> DriverDevelopersScreen(vm)
                 is ScreenState.AdminIssue -> IssueDetails(screen.issue, ui, vm, admin = true)
             }
@@ -246,6 +247,11 @@ private fun AdminHome(ui: UiState, vm: G57ViewModel) {
                 Text("All Issues", style = MaterialTheme.typography.headlineSmall, fontWeight = FontWeight.Bold)
                 Text("Developer access", color = G57Cyan)
             }
+            if (ui.profile?.id == "8889b1a6-7dbd-4d42-9dcc-b231ddd0c5f2") {
+                IconButton(onClick = vm::openCreatorPassword) {
+                    Icon(Icons.Default.Password, contentDescription = "Change creator password")
+                }
+            }
             IconButton(onClick = vm::openUserManagement) {
                 Icon(Icons.Default.ManageAccounts, contentDescription = "User management")
             }
@@ -262,6 +268,70 @@ private fun AdminHome(ui: UiState, vm: G57ViewModel) {
         }
         Spacer(Modifier.height(12.dp))
         IssueList(ui.issues, vm::openAdminIssue, "No issues in Cloud.")
+    }
+}
+
+@Composable
+private fun CreatorPasswordScreen(ui: UiState, vm: G57ViewModel) {
+    var password by remember { mutableStateOf("") }
+    var confirmPassword by remember { mutableStateOf("") }
+
+    LaunchedEffect(ui.success) {
+        if (ui.success == "Password changed successfully.") {
+            password = ""
+            confirmPassword = ""
+        }
+    }
+
+    Column(Modifier.fillMaxSize()) {
+        BrandHeader("CREATOR • CHANGE PASSWORD", onBack = vm::back)
+        Column(
+            Modifier.fillMaxWidth().padding(horizontal = 20.dp, vertical = 12.dp),
+            verticalArrangement = Arrangement.spacedBy(14.dp)
+        ) {
+            Text("Change your account password", style = MaterialTheme.typography.headlineSmall, fontWeight = FontWeight.Bold)
+            Text("Only the G57 creator account can use this feature. Use at least 8 characters.", color = Color.Gray)
+            OutlinedTextField(
+                value = password,
+                onValueChange = { password = it },
+                label = { Text("New password") },
+                singleLine = true,
+                visualTransformation = PasswordVisualTransformation(),
+                enabled = !ui.loading,
+                modifier = Modifier.fillMaxWidth()
+            )
+            OutlinedTextField(
+                value = confirmPassword,
+                onValueChange = { confirmPassword = it },
+                label = { Text("Confirm new password") },
+                singleLine = true,
+                visualTransformation = PasswordVisualTransformation(),
+                enabled = !ui.loading,
+                modifier = Modifier.fillMaxWidth()
+            )
+            ui.error?.let { Text(it, color = MaterialTheme.colorScheme.error) }
+            ui.success?.let { Text(it, color = G57Cyan) }
+            Button(
+                onClick = {
+                    when {
+                        password.length !in 8..128 -> Unit
+                        password != confirmPassword -> Unit
+                        else -> vm.changeCreatorPassword(password)
+                    }
+                },
+                enabled = !ui.loading && password.length in 8..128 && password == confirmPassword,
+                modifier = Modifier.fillMaxWidth(),
+                shape = RoundedCornerShape(16.dp)
+            ) {
+                Text(if (ui.loading) "UPDATING…" else "CHANGE PASSWORD")
+            }
+            if (password.isNotEmpty() && password.length < 8) {
+                Text("Password must contain at least 8 characters.", color = Color.Gray, style = MaterialTheme.typography.bodySmall)
+            }
+            if (confirmPassword.isNotEmpty() && password != confirmPassword) {
+                Text("Passwords do not match.", color = MaterialTheme.colorScheme.error, style = MaterialTheme.typography.bodySmall)
+            }
+        }
     }
 }
 

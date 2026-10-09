@@ -605,6 +605,16 @@ private fun IssueDetails(issue: Issue, ui: UiState, vm: G57ViewModel, admin: Boo
     var showDelete by remember { mutableStateOf(false) }
     var note by remember(issue.id) { mutableStateOf(issue.developerNote.orEmpty()) }
     var statusExpanded by remember { mutableStateOf(false) }
+    val context = LocalContext.current
+    val imagePicker = rememberLauncherForActivityResult(ActivityResultContracts.OpenMultipleDocuments()) { uris ->
+        vm.addFiles(readPickedFiles(uris, "image", context))
+    }
+    val videoPicker = rememberLauncherForActivityResult(ActivityResultContracts.OpenMultipleDocuments()) { uris ->
+        vm.addFiles(readPickedFiles(uris, "video", context))
+    }
+    val logPicker = rememberLauncherForActivityResult(ActivityResultContracts.OpenMultipleDocuments()) { uris ->
+        vm.addFiles(readPickedFiles(uris, "log", context))
+    }
     Column(Modifier.fillMaxSize()) {
         BrandHeader(if (admin) "ADMIN • Issue #${issue.issueNumber}" else "Issue #${issue.issueNumber}") { vm.back() }
         Column(Modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(horizontal = 20.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
@@ -647,6 +657,38 @@ private fun IssueDetails(issue: Issue, ui: UiState, vm: G57ViewModel, admin: Boo
                 Text("No attachments.", color = Color.Gray)
             } else {
                 ui.attachments.forEach { attachment -> AttachmentRow(attachment) { vm.openAttachment(attachment.storagePath) } }
+            }
+
+            if (!admin) {
+                Text("ADD MORE FILES", color = G57Cyan, fontWeight = FontWeight.Bold, modifier = Modifier.padding(top = 6.dp))
+                Text("Forgot a screenshot, video, or log? Add it here without creating another issue. Maximum 150 MB per file.", color = Color.Gray, style = MaterialTheme.typography.bodySmall)
+                Row(horizontalArrangement = Arrangement.spacedBy(8.dp), modifier = Modifier.fillMaxWidth()) {
+                    OutlinedButton(onClick = { imagePicker.launch(arrayOf("image/*")) }, modifier = Modifier.weight(1f)) { Text("📷 Images") }
+                    OutlinedButton(onClick = { videoPicker.launch(arrayOf("video/*")) }, modifier = Modifier.weight(1f)) { Text("🎥 Video") }
+                    OutlinedButton(onClick = { logPicker.launch(arrayOf("text/*", "application/zip", "application/octet-stream", "application/json")) }, modifier = Modifier.weight(1f)) { Text("📄 Logs") }
+                }
+                ui.selectedFiles.forEachIndexed { index, file ->
+                    Surface(color = G57Card, shape = RoundedCornerShape(12.dp), modifier = Modifier.fillMaxWidth()) {
+                        Row(Modifier.padding(12.dp), verticalAlignment = Alignment.CenterVertically) {
+                            Text(file.name, Modifier.weight(1f), maxLines = 1)
+                            Text(formatBytes(file.size), color = Color.Gray, style = MaterialTheme.typography.bodySmall)
+                            IconButton(onClick = { vm.removeFile(index) }, enabled = !ui.loading) {
+                                Icon(Icons.Default.Close, contentDescription = "Remove")
+                            }
+                        }
+                    }
+                }
+                Button(
+                    onClick = { vm.uploadAdditionalFiles(issue.id) },
+                    enabled = !ui.loading && ui.selectedFiles.isNotEmpty(),
+                    modifier = Modifier.fillMaxWidth()
+                ) {
+                    Icon(Icons.Default.CloudUpload, contentDescription = null)
+                    Spacer(Modifier.width(8.dp))
+                    Text(if (ui.loading) "UPLOADING…" else "UPLOAD FILES TO THIS ISSUE")
+                }
+                ui.success?.let { Text(it, color = G57Cyan) }
+                ui.error?.let { Text(it, color = MaterialTheme.colorScheme.error) }
             }
 
             if (admin) {

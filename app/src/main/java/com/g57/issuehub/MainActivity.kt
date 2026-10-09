@@ -117,7 +117,7 @@ private fun BrandHeader(subtitle: String? = null, onMenu: (() -> Unit)? = null, 
             }
         }
         Column(Modifier.weight(1f)) {
-            Text("G57", style = MaterialTheme.typography.headlineMedium, fontWeight = FontWeight.ExtraBold, color = G57Primary)
+            Text("GMailGPU", style = MaterialTheme.typography.headlineMedium, fontWeight = FontWeight.ExtraBold, color = G57Primary)
             if (subtitle != null) Text(subtitle, color = Color.Gray)
         }
     }
@@ -128,8 +128,8 @@ private fun LoginScreen(ui: UiState, vm: G57ViewModel) {
     Column(Modifier.fillMaxSize().padding(horizontal = 24.dp), verticalArrangement = Arrangement.Center, horizontalAlignment = Alignment.CenterHorizontally) {
         Image(painterResource(com.g57.issuehub.R.drawable.g57_uploaded_logo), "G57 logo", Modifier.size(112.dp))
         Spacer(Modifier.height(12.dp))
-        Text("G57", style = MaterialTheme.typography.displaySmall, fontWeight = FontWeight.ExtraBold, color = G57Primary)
-        Text("Mali GPU Issue Reporter", color = G57Cyan, style = MaterialTheme.typography.titleMedium)
+        Text("GMailGPU", style = MaterialTheme.typography.displaySmall, fontWeight = FontWeight.ExtraBold, color = G57Primary)
+        Text("G57 • G52 • G615 • G720 | Mali GPU Support", color = G57Cyan, style = MaterialTheme.typography.titleMedium)
         Spacer(Modifier.height(24.dp))
         Text("Choose access", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
         Spacer(Modifier.height(10.dp))
@@ -230,7 +230,7 @@ private fun UserHome(ui: UiState, vm: G57ViewModel) {
                     shownNotification = null
                 }) { Text("OK") }
             },
-            title = { Text("G57 • Problem Resolved ✅") },
+            title = { Text("GMailGPU • Problem Resolved ✅") },
             text = { Text("${notification.title}\n\n${notification.message}") }
         )
     }
@@ -295,18 +295,27 @@ private fun AdminSolvedUsers(ui: UiState, vm: G57ViewModel) {
 @Composable
 private fun DriverDevelopersScreen(vm: G57ViewModel) {
     val repositories = listOf(
-        "Noysz / panvk-g99-jm" to "https://github.com/Noysz/panvk-g99-jm",
-        "mexicanbr0auth / mesa-panvk-g57" to "https://github.com/mexicanbr0auth/mesa-panvk-g57",
-        "FristOneRR / FristOneRR-Panvk-Driver" to "https://github.com/FristOneRR/FristOneRR-Panvk-Driver"
+        Triple("G57", "Noysz / panvk-g99-jm", "https://github.com/Noysz/panvk-g99-jm"),
+        Triple("G57", "mexicanbr0auth / mesa-panvk-g57", "https://github.com/mexicanbr0auth/mesa-panvk-g57"),
+        Triple("G57", "FristOneRR / FristOneRR-Panvk-Driver", "https://github.com/FristOneRR/FristOneRR-Panvk-Driver"),
+        Triple("G52", "LukeValen / panvk-mali-g52", "https://github.com/LukeValen/panvk-mali-g52"),
+        Triple("G615", "GunaCharanTeja / panvk-kbase-android", "https://github.com/GunaCharanTeja/panvk-kbase-android"),
+        Triple("G720", "wonderkast02 / panvk-g720-kbase-csf", "https://github.com/wonderkast02/panvk-g720-kbase-csf")
     )
     Column(Modifier.fillMaxSize()) {
-        BrandHeader("GitHub Devlopers All G57 Drivers") { vm.back() }
+        BrandHeader("GMailGPU • Mali Driver Developers") { vm.back() }
+        Text(
+            "🤝 These open-source driver projects may help you investigate Mali GPU, Vulkan, and Winlator issues.",
+            color = Color.Gray,
+            style = MaterialTheme.typography.bodySmall,
+            modifier = Modifier.padding(horizontal = 20.dp, vertical = 4.dp)
+        )
         LazyColumn(
             modifier = Modifier.weight(1f),
             contentPadding = PaddingValues(horizontal = 20.dp, vertical = 8.dp),
             verticalArrangement = Arrangement.spacedBy(14.dp)
         ) {
-            items(repositories) { (name, url) ->
+            items(repositories) { (gpu, name, url) ->
                 ElevatedCard(
                     modifier = Modifier.fillMaxWidth(),
                     colors = CardDefaults.elevatedCardColors(containerColor = G57Card),
@@ -316,7 +325,7 @@ private fun DriverDevelopersScreen(vm: G57ViewModel) {
                         Row(verticalAlignment = Alignment.CenterVertically) {
                             Icon(Icons.Default.Code, contentDescription = null, tint = G57Cyan, modifier = Modifier.size(26.dp))
                             Spacer(Modifier.width(10.dp))
-                            Text(name, fontWeight = FontWeight.Bold, modifier = Modifier.weight(1f))
+                            Column(Modifier.weight(1f)) { Text("GPU • $gpu", color = G57Cyan, style = MaterialTheme.typography.labelMedium); Text(name, fontWeight = FontWeight.Bold) }
                         }
                         Spacer(Modifier.height(8.dp))
                         Text(url, color = Color.Gray, style = MaterialTheme.typography.bodySmall)

@@ -22,6 +22,7 @@ sealed interface ScreenState {
     data object AdminHome : ScreenState
     data object AdminSolvedUsers : ScreenState
     data object AdminUserManagement : ScreenState
+    data object CreatorPassword : ScreenState
     data object DriverDevelopers : ScreenState
     data class AdminIssue(val issue: Issue) : ScreenState
 }
@@ -72,6 +73,8 @@ data class UiState(
     val vkd3d: String = "",
     val box64: String = ""
 )
+
+private const val CREATOR_UID = "8889b1a6-7dbd-4d42-9dcc-b231ddd0c5f2"
 
 class G57ViewModel(app: Application) : AndroidViewModel(app) {
     private val repo = G57Repository()
@@ -216,6 +219,29 @@ class G57ViewModel(app: Application) : AndroidViewModel(app) {
 
     fun openSolvedUsers() = update { copy(screen = ScreenState.AdminSolvedUsers, error = null) }
     fun openUserManagement() = update { copy(screen = ScreenState.AdminUserManagement, error = null, success = null) }
+
+    fun openCreatorPassword() = update {
+        if (profile?.id == CREATOR_UID) {
+            copy(screen = ScreenState.CreatorPassword, error = null, success = null)
+        } else {
+            copy(error = "Creator access only.")
+        }
+    }
+
+    fun changeCreatorPassword(newPassword: String) = viewModelScope.launch {
+        if (_ui.value.profile?.id != CREATOR_UID) {
+            update { copy(error = "Creator access only.") }
+            return@launch
+        }
+        if (newPassword.length !in 8..128) {
+            update { copy(error = "Password must be between 8 and 128 characters.") }
+            return@launch
+        }
+        update { copy(loading = true, error = null, success = null) }
+        runCatching { repo.changeCreatorPassword(newPassword) }
+            .onSuccess { update { copy(loading = false, success = "Password changed successfully.") } }
+            .onFailure { e -> update { copy(loading = false, error = e.message ?: "Password change failed.") } }
+    }
     fun openDriverDevelopers() = update { copy(screen = ScreenState.DriverDevelopers, error = null, success = null) }
     fun openExternalUrl(url: String) = update { copy(openUrl = url) }
 

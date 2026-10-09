@@ -29,19 +29,39 @@ jobs:
           distribution: temurin
           java-version: '17'
 
-      # GitHub-hosted Ubuntu runners include Android command-line tools.
-      # Accept SDK licenses non-interactively before installing only the required packages.
-      - name: Accept Android SDK licenses
-        shell: bash {0}
+      # Discover the runner-provided Android SDK tools explicitly; sdkmanager
+      # is not guaranteed to be on PATH in GitHub-hosted runner images.
+      - name: Locate Android SDK tools
+        shell: bash
         run: |
-          set +e
+          set -euo pipefail
+          ANDROID_HOME="${ANDROID_HOME:-/usr/local/lib/android/sdk}"
+          if [[ ! -d "$ANDROID_HOME" ]]; then
+            echo "::error::Android SDK directory not found: $ANDROID_HOME"
+            exit 1
+          fi
+          SDKMANAGER="$(find "$ANDROID_HOME/cmdline-tools" -type f -name sdkmanager -print -quit 2>/dev/null || true)"
+          if [[ -z "$SDKMANAGER" ]]; then
+            echo "::error::sdkmanager was not found under $ANDROID_HOME/cmdline-tools"
+            find "$ANDROID_HOME" -maxdepth 4 -type f -name sdkmanager -print || true
+            exit 1
+          fi
+          echo "ANDROID_HOME=$ANDROID_HOME" >> "$GITHUB_ENV"
+          echo "$(dirname "$SDKMANAGER")" >> "$GITHUB_PATH"
+          echo "$ANDROID_HOME/platform-tools" >> "$GITHUB_PATH"
+          echo "Using SDK manager at: $SDKMANAGER"
+
+      - name: Accept Android SDK licenses
+        shell: bash
+        run: |
+          set -euo pipefail
           yes | sdkmanager --licenses >/dev/null
-          sdk_status=${PIPESTATUS[1]}
-          set -e
-          exit "$sdk_status"
 
       - name: Install required Android SDK packages
-        run: sdkmanager "platforms;android-36" "build-tools;36.0.0" "platform-tools"
+        shell: bash
+        run: |
+          set -euo pipefail
+          sdkmanager "platforms;android-36" "build-tools;36.0.0" "platform-tools"
 
       - name: Set up Gradle
         uses: gradle/actions/setup-gradle@ed408507eac070d1f99cc633dbcf757c94c7933a # v4

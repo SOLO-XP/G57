@@ -1,4 +1,5 @@
 import java.util.Properties
+import java.util.Base64
 
 plugins {
     id("com.android.application")
@@ -80,7 +81,7 @@ val decodeG57Icon by tasks.registering {
     doLast {
         val target = outputIcon.get().asFile
         target.parentFile.mkdirs()
-        target.writeBytes(java.util.Base64.getDecoder().decode(encodedIcon.asFile.readText().trim()))
+        target.writeBytes(Base64.getDecoder().decode(encodedIcon.asFile.readText().trim()))
     }
 }
 

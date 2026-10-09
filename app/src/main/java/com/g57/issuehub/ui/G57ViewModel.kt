@@ -54,6 +54,8 @@ data class UiState(
     val issues: List<Issue> = emptyList(),
     val attachments: List<Attachment> = emptyList(),
     val notifications: List<Notification> = emptyList(),
+    val chatMessages: List<IssueMessage> = emptyList(),
+    val chatDraft: String = "",
     val resolvedUsers: List<ResolvedUser> = emptyList(),
     val userProfiles: List<Profile> = emptyList(),
     val selectedFiles: List<PickedFile> = emptyList(),
@@ -382,17 +384,54 @@ class G57ViewModel(app: Application) : AndroidViewModel(app) {
             copy(
                 screen = if (admin) ScreenState.AdminIssue(issue) else ScreenState.UserIssue(issue),
                 attachments = emptyList(),
+                chatMessages = emptyList(),
+                chatDraft = "",
                 loading = true,
                 error = null
             )
         }
         if (!SupabaseProvider.enabled) {
-            update { copy(loading = false) }
+            update { copy(loading = false, error = "Cloud database is not configured; issue chat requires Supabase.") }
             return@launch
         }
         runCatching { repo.attachments(issue.id) }
             .onSuccess { files -> update { copy(loading = false, attachments = files) } }
             .onFailure { e -> update { copy(loading = false, error = e.message) } }
+        loadIssueMessages(issue.id)
+    }
+
+    fun setChatDraft(value: String) = update { copy(chatDraft = value.take(4000)) }
+
+    fun refreshIssueMessages(issueId: String) = loadIssueMessages(issueId)
+
+    private fun loadIssueMessages(issueId: String) = viewModelScope.launch {
+        if (!SupabaseProvider.enabled) return@launch
+        runCatching { repo.issueMessages(issueId) }
+            .onSuccess { messages -> update { copy(chatMessages = messages) } }
+            .onFailure { e ->
+                update { copy(error = "Couldn't load issue chat. Apply supabase_issue_chat.sql in Supabase SQL Editor. ${e.message.orEmpty()}") }
+            }
+    }
+
+    fun sendIssueMessage(issueId: String) = viewModelScope.launch {
+        val body = _ui.value.chatDraft.trim()
+        if (body.isBlank()) {
+            update { copy(error = "Write a message first.") }
+            return@launch
+        }
+        if (!SupabaseProvider.enabled) {
+            update { copy(error = "Issue chat requires the Supabase cloud database.") }
+            return@launch
+        }
+        update { copy(loading = true, error = null, success = null) }
+        runCatching {
+            repo.sendIssueMessage(issueId, body)
+            repo.issueMessages(issueId)
+        }.onSuccess { messages ->
+            update { copy(loading = false, chatMessages = messages, chatDraft = "", success = "Message sent.") }
+        }.onFailure { e ->
+            update { copy(loading = false, error = e.message ?: "Message could not be sent.") }
+        }
     }
 
     fun updateStatus(issueId: String, status: String) = viewModelScope.launch {

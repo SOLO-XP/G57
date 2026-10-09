@@ -145,6 +145,24 @@ class G57Repository {
             order(column = "created_at", order = Order.DESCENDING)
         }.decodeList()
 
+    suspend fun issueMessages(issueId: String): List<IssueMessage> =
+        sb.from("issue_messages").select(Columns.ALL) {
+            filter { eq("issue_id", issueId) }
+            order(column = "created_at", order = Order.ASCENDING)
+        }.decodeList()
+
+    suspend fun sendIssueMessage(issueId: String, body: String): IssueMessage {
+        val cleanBody = body.trim()
+        require(cleanBody.isNotEmpty()) { "Write a message first." }
+        require(cleanBody.length <= 4000) { "Messages must be 4000 characters or less." }
+        val senderId = sb.auth.currentUserOrNull()?.id ?: error("Your session has expired. Sign in again.")
+        return sb.from("issue_messages").insert(buildJsonObject {
+            put("issue_id", issueId)
+            put("sender_id", senderId)
+            put("body", cleanBody)
+        }) { select() }.decodeSingle()
+    }
+
     suspend fun createIssue(input: CreateIssueInput): Issue =
         sb.from("issues").insert(input) { select() }.decodeSingle()
 

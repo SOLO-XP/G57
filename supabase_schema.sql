@@ -221,3 +221,22 @@ for each row execute procedure public.notify_issue_resolved();
 -- a unique username; no email or password is shown or required.
 -- Enable Authentication -> Sign In / Providers -> Anonymous Sign-Ins
 -- in the Supabase dashboard before using username-only User access.
+
+
+-- Issue chat (the same policies are also provided as a standalone migration in supabase_issue_chat.sql).
+create table if not exists public.issue_messages (
+    id uuid primary key default gen_random_uuid(),
+    issue_id uuid not null references public.issues(id) on delete cascade,
+    sender_id uuid not null references public.profiles(id) on delete cascade,
+    body text not null check (char_length(trim(body)) between 1 and 4000),
+    created_at timestamptz not null default now()
+);
+create index if not exists issue_messages_issue_created_idx on public.issue_messages (issue_id, created_at asc);
+alter table public.issue_messages enable row level security;
+grant select, insert on public.issue_messages to authenticated;
+drop policy if exists "issue messages read owner or admin" on public.issue_messages;
+create policy "issue messages read owner or admin" on public.issue_messages for select to authenticated
+using (public.is_admin() or exists (select 1 from public.issues i where i.id = issue_messages.issue_id and i.user_id = auth.uid()));
+drop policy if exists "issue messages insert owner or admin" on public.issue_messages;
+create policy "issue messages insert owner or admin" on public.issue_messages for insert to authenticated
+with check (sender_id = auth.uid() and (public.is_admin() or exists (select 1 from public.issues i where i.id = issue_messages.issue_id and i.user_id = auth.uid())));

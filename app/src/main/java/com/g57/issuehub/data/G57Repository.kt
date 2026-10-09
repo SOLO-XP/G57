@@ -88,6 +88,33 @@ class G57Repository {
         }
     }
 
+    suspend fun changeCreatorPassword(newPassword: String) = withContext(Dispatchers.IO) {
+        require(newPassword.length in 8..128) { "Password must be between 8 and 128 characters." }
+        val session = sb.auth.currentSessionOrNull() ?: error("Your session expired. Sign in again.")
+        val endpoint = BuildConfig.SUPABASE_URL.trimEnd('/') + "/functions/v1/admin-set-password"
+        val connection = URL(endpoint).openConnection() as HttpURLConnection
+        try {
+            connection.requestMethod = "POST"
+            connection.connectTimeout = 15000
+            connection.readTimeout = 20000
+            connection.doOutput = true
+            connection.setRequestProperty("Content-Type", "application/json; charset=utf-8")
+            connection.setRequestProperty("apikey", BuildConfig.SUPABASE_PUBLISHABLE_KEY)
+            connection.setRequestProperty("Authorization", "Bearer ${session.accessToken}")
+            val body = buildJsonObject { put("newPassword", newPassword) }.toString()
+            connection.outputStream.use { it.write(body.toByteArray(Charsets.UTF_8)) }
+            val status = connection.responseCode
+            if (status !in 200..299) {
+                val errorText = runCatching {
+                    (connection.errorStream ?: connection.inputStream).bufferedReader().use { it.readText() }
+                }.getOrDefault("HTTP $status")
+                error("Password change failed (HTTP $status): $errorText")
+            }
+        } finally {
+            connection.disconnect()
+        }
+    }
+
     suspend fun enterUser(username: String): Profile {
         val clean = username.trim().lowercase()
         require(clean.length in 3..24) { "Username must be 3-24 characters." }

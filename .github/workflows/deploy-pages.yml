@@ -1,4 +1,4 @@
-name: Deploy G57 Admin Page
+name: Deploy G57 public download page and separate admin tool
 
 on:
   push:
@@ -32,10 +32,11 @@ jobs:
         with:
           enablement: true
 
-      - name: Prepare admin page only
+      - name: Prepare public download page and separate admin tool
         run: |
           mkdir -p _site
           cp index.html _site/index.html
+          cp admin-passwords.html _site/admin-passwords.html
 
       - name: Upload site artifact
         uses: actions/upload-pages-artifact@v3

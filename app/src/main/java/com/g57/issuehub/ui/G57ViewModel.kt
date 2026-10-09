@@ -214,6 +214,21 @@ class G57ViewModel(app: Application) : AndroidViewModel(app) {
             .onFailure { e -> update { copy(loading = false, error = e.message) } }
     }
 
+    fun openDriverDevelopers() = update { copy(screen = ScreenState.DriverDevelopers, error = null) }
+
+    fun openExternalUrl(url: String) = update { copy(openUrl = url) }
+
+    fun loadUsers() = viewModelScope.launch {
+        if (!SupabaseProvider.enabled) {
+            update { copy(userProfiles = emptyList()) }
+            return@launch
+        }
+        update { copy(loading = true, error = null) }
+        runCatching { repo.allProfiles() }
+            .onSuccess { profiles -> update { copy(loading = false, userProfiles = profiles) } }
+            .onFailure { e -> update { copy(loading = false, error = e.message ?: "Could not load users.") } }
+    }
+
     fun openSolvedUsers() = update { copy(screen = ScreenState.AdminSolvedUsers, error = null) }
     fun openUserManagement() = update { copy(screen = ScreenState.AdminUserManagement, error = null, success = null) }
 

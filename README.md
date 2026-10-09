@@ -79,3 +79,20 @@ G57 is designed for the Mali GPU / emulator community, with a focus on making bu
 ---
 
 **G57 — Mali GPU Issue Reporter**
+
+
+## Username accounts and reinstall recovery (v0.2.7)
+
+User accounts now use a username plus password so a user can sign in again after reinstalling the app. New accounts use the internal email form `<username>@g57.app`; users do not need to supply a real email address. In the Supabase Dashboard, disable email confirmation for this username/password flow, because these internal addresses cannot receive confirmation emails.
+
+Older username-only anonymous accounts cannot be securely recovered after app data is removed: Supabase anonymous users cannot prove identity once their local session is gone. For a one-time migration, sign in as admin, open **User Management**, delete the old legacy profile (which frees the username), then register that username again with a password. Future reinstalls should use **Sign In** with that password.
+
+### Secure admin user deletion
+
+The Android app never contains a Supabase service-role key. To enable the admin delete button, deploy the Edge Function in `supabase/functions/admin-delete-user/index.ts`:
+
+```bash
+supabase functions deploy admin-delete-user
+```
+
+The function uses the project secret `SUPABASE_SERVICE_ROLE_KEY`, validates the caller's Supabase session and admin profile, removes files associated with the user's issues, then deletes the Auth user. Never put the service-role key in Android app configuration.

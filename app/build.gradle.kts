@@ -23,8 +23,8 @@ android {
         applicationId = "com.g57.issuehub"
         minSdk = 26
         targetSdk = 36
-        versionCode = 9
-        versionName = "0.2.8"
+        versionCode = 10
+        versionName = "0.1 Beta"
 
         val sbUrl = localProperties.getProperty("SUPABASE_URL", System.getenv("SUPABASE_URL") ?: "")
         val sbKey = localProperties.getProperty("SUPABASE_PUBLISHABLE_KEY", System.getenv("SUPABASE_PUBLISHABLE_KEY") ?: "")
@@ -67,4 +67,26 @@ dependencies {
     implementation("io.github.jan-tennert.supabase:postgrest-kt")
     implementation("io.github.jan-tennert.supabase:storage-kt")
     implementation("io.ktor:ktor-client-android:3.0.3")
+}
+
+
+// Decode the uploaded launcher image into an Android drawable during the build.
+val generatedG57IconRes = layout.buildDirectory.dir("generated/g57Icon/res")
+val decodeG57Icon by tasks.registering {
+    val encodedIcon = layout.projectDirectory.file("src/main/icon/g57_icon.b64")
+    val outputIcon = generatedG57IconRes.map { it.file("drawable/g57_uploaded_logo.jpg") }
+    inputs.file(encodedIcon)
+    outputs.file(outputIcon)
+    doLast {
+        val target = outputIcon.get().asFile
+        target.parentFile.mkdirs()
+        target.writeBytes(java.util.Base64.getDecoder().decode(encodedIcon.asFile.readText().trim()))
+    }
+}
+
+android.sourceSets.getByName("main").res.srcDir(generatedG57IconRes)
+tasks.configureEach {
+    if (name.startsWith("merge") && name.endsWith("Resources")) {
+        dependsOn(decodeG57Icon)
+    }
 }

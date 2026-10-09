@@ -1,4 +1,4 @@
-name: Build G57 APK
+name: Build GMailGPU APK
 
 on:
   workflow_dispatch:
@@ -89,15 +89,15 @@ jobs:
 
           echo "Checking package name and version..."
           "$AAPT" dump badging "$APK" | tee apk-badging.txt
-          grep -F "package: name='com.g57.issuehub' versionCode='10' versionName='0.1 Beta'" apk-badging.txt
+          grep -F "package: name='com.g57.issuehub' versionCode='11' versionName='0.1 Beta'" apk-badging.txt
 
           sha256sum "$APK" | tee app-debug.apk.sha256
           SHA256="$(sha256sum "$APK" | cut -d ' ' -f 1)"
           {
-            echo "### Verified G57 APK"
+            echo "### Verified GMailGPU APK"
             echo ""
             echo "- Package: com.g57.issuehub"
-            echo "- Version: 0.1 Beta (10)"
+            echo "- Version: 0.1 Beta (11)"
             echo "- APK size: $(stat -c '%s bytes' "$APK")"
             echo "- SHA-256: $SHA256"
             echo "- ZIP structure: passed"
@@ -107,7 +107,7 @@ jobs:
       - name: Upload verified APK and checksum
         uses: actions/upload-artifact@v4
         with:
-          name: G57-v0.1-Beta-issue-management
+          name: GMailGPU-v0.1-Beta
           path: |
             app/build/outputs/apk/debug/app-debug.apk
             app-debug.apk.sha256

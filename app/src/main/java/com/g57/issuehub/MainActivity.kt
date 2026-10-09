@@ -340,7 +340,7 @@ private fun DriverDevelopersScreen(vm: G57ViewModel) {
             ) {
                 Icon(Icons.Default.Download, contentDescription = null)
                 Spacer(Modifier.width(8.dp))
-                Text("Download Winlator Mali Charan")
+                Text("Winlator Download Charan")
             }
             Spacer(Modifier.height(12.dp))
             Text(

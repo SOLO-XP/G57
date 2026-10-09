@@ -32,7 +32,13 @@ jobs:
       # GitHub-hosted Ubuntu runners include Android command-line tools.
       # Accept SDK licenses non-interactively before installing only the required packages.
       - name: Accept Android SDK licenses
-        run: yes | sdkmanager --licenses >/dev/null || test "$?" -eq 141
+        shell: bash {0}
+        run: |
+          set +e
+          yes | sdkmanager --licenses >/dev/null
+          sdk_status=${PIPESTATUS[1]}
+          set -e
+          exit "$sdk_status"
 
       - name: Install required Android SDK packages
         run: sdkmanager "platforms;android-36" "build-tools;36.0.0" "platform-tools"

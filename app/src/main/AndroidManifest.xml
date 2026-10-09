@@ -4,7 +4,7 @@
         android:allowBackup="true"
         android:icon="@drawable/g57_uploaded_logo"
         android:roundIcon="@drawable/g57_uploaded_logo"
-        android:label="G57"
+        android:label="GMailGPU"
         android:theme="@style/Theme.G57">
         <activity
             android:name=".MainActivity"

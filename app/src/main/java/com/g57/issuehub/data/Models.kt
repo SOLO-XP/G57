@@ -7,7 +7,8 @@ import kotlinx.serialization.Serializable
 data class Profile(
     val id: String,
     val username: String,
-    val role: String = "user"
+    val role: String = "user",
+    @SerialName("created_at") val createdAt: String? = null
 )
 
 @Serializable

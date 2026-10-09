@@ -93,8 +93,10 @@ tasks.configureEach {
     if (name != "decodeG57Icon" &&
         (name.startsWith("map") && name.endsWith("SourceSetPaths") ||
          name.startsWith("process") && name.endsWith("Resources") ||
+         name.startsWith("generate") && name.endsWith("Resources") ||
          name.startsWith("merge") && name.endsWith("Resources") ||
-         name.startsWith("package") && name.endsWith("Resources"))) {
+         name.startsWith("package") && name.endsWith("Resources") ||
+         name.startsWith("parse") && name.endsWith("LocalResources"))) {
         dependsOn(decodeG57Icon)
     }
 }

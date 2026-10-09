@@ -67,6 +67,7 @@ dependencies {
     implementation("io.github.jan-tennert.supabase:auth-kt")
     implementation("io.github.jan-tennert.supabase:postgrest-kt")
     implementation("io.github.jan-tennert.supabase:storage-kt")
+    implementation("io.github.jan-tennert.supabase:storage-kt")
     implementation("io.ktor:ktor-client-android:3.0.3")
 }
 
@@ -86,8 +87,15 @@ val decodeG57Icon by tasks.registering {
 }
 
 android.sourceSets.getByName("main").res.srcDir(generatedG57IconRes)
+
+// Android's source-set discovery and resource-processing tasks inspect the generated
+// resource directory too, so they must wait for the icon decoder to create it.
 tasks.configureEach {
-    if (name.startsWith("merge") && name.endsWith("Resources")) {
+    if (name != "decodeG57Icon" &&
+        (name.startsWith("map") && name.endsWith("SourceSetPaths") ||
+         name.startsWith("process") && name.endsWith("Resources") ||
+         name.startsWith("merge") && name.endsWith("Resources") ||
+         name.startsWith("package") && name.endsWith("Resources"))) {
         dependsOn(decodeG57Icon)
     }
 }

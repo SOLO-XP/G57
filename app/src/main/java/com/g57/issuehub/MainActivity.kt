@@ -32,6 +32,7 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import com.g57.issuehub.data.Attachment
 import com.g57.issuehub.data.Issue
 import com.g57.issuehub.data.Notification
+import com.g57.issuehub.data.Profile
 import com.g57.issuehub.ui.*
 import java.util.Locale
 
@@ -81,6 +82,8 @@ fun G57App(vm: G57ViewModel = viewModel()) {
                 is ScreenState.UserIssue -> IssueDetails(screen.issue, ui, vm, admin = false)
                 ScreenState.AdminHome -> AdminHome(ui, vm)
                 ScreenState.AdminSolvedUsers -> AdminSolvedUsers(ui, vm)
+                ScreenState.AdminUserManagement -> AdminUserManagementScreen(ui, vm)
+                ScreenState.DriverDevelopers -> DriverDevelopersScreen(vm)
                 is ScreenState.AdminIssue -> IssueDetails(screen.issue, ui, vm, admin = true)
             }
         }
@@ -88,8 +91,13 @@ fun G57App(vm: G57ViewModel = viewModel()) {
 }
 
 @Composable
-private fun BrandHeader(subtitle: String? = null, onBack: (() -> Unit)? = null) {
+private fun BrandHeader(subtitle: String? = null, onBack: (() -> Unit)? = null, onMenu: (() -> Unit)? = null) {
     Row(Modifier.fillMaxWidth().padding(20.dp), verticalAlignment = Alignment.CenterVertically) {
+        if (onMenu != null) {
+            IconButton(onClick = onMenu, modifier = Modifier.padding(end = 4.dp)) {
+                Icon(Icons.Default.Menu, contentDescription = "Open menu", tint = G57Primary, modifier = Modifier.size(28.dp))
+            }
+        }
         if (onBack != null) {
             Surface(
                 onClick = onBack,
@@ -138,20 +146,36 @@ private fun LoginScreen(ui: UiState, vm: G57ViewModel) {
             singleLine = true,
             modifier = Modifier.fillMaxWidth()
         )
-        if (ui.loginRole == "admin") {
+        if (ui.loginRole == "user") {
             Spacer(Modifier.height(12.dp))
-            OutlinedTextField(
-                ui.password,
-                vm::setPassword,
-                label = { Text("Password") },
-                singleLine = true,
-                visualTransformation = PasswordVisualTransformation(),
-                modifier = Modifier.fillMaxWidth()
-            )
+            Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                FilterChip(
+                    selected = !ui.userCreateAccount,
+                    onClick = { vm.setUserCreateAccount(false) },
+                    label = { Text("SIGN IN") },
+                    modifier = Modifier.weight(1f)
+                )
+                FilterChip(
+                    selected = ui.userCreateAccount,
+                    onClick = { vm.setUserCreateAccount(true) },
+                    label = { Text("CREATE ACCOUNT") },
+                    modifier = Modifier.weight(1f)
+                )
+            }
         }
+        Spacer(Modifier.height(12.dp))
+        OutlinedTextField(
+            ui.password,
+            vm::setPassword,
+            label = { Text("Password") },
+            supportingText = { Text(if (ui.loginRole == "user" && ui.userCreateAccount) "Use at least 8 characters. Keep it safe for reinstalling." else "Your account password") },
+            singleLine = true,
+            visualTransformation = PasswordVisualTransformation(),
+            modifier = Modifier.fillMaxWidth()
+        )
         Spacer(Modifier.height(18.dp))
         Button(onClick = vm::login, enabled = !ui.loading, modifier = Modifier.fillMaxWidth(), shape = RoundedCornerShape(16.dp)) {
-            Text(if (ui.loading) "ENTERING…" else if (ui.loginRole == "user") "ENTER" else "SIGN IN")
+            Text(if (ui.loading) "PLEASE WAIT…" else if (ui.loginRole == "user") { if (ui.userCreateAccount) "CREATE ACCOUNT" else "SIGN IN" } else "SIGN IN")
         }
         ui.error?.let { Text(it, color = MaterialTheme.colorScheme.error, modifier = Modifier.padding(top = 14.dp)) }
     }
@@ -178,7 +202,7 @@ private fun UserHome(ui: UiState, vm: G57ViewModel) {
         ui.profile?.id?.let(vm::loadUserData)
     }
     Column(Modifier.fillMaxSize()) {
-        BrandHeader("Your issues")
+        BrandHeader("Your issues", onMenu = vm::openDriverDevelopers)
         Row(Modifier.padding(horizontal = 20.dp), verticalAlignment = Alignment.CenterVertically) {
             Column(Modifier.weight(1f)) {
                 Text("Welcome, ${ui.profile?.username ?: ui.username}", style = MaterialTheme.typography.titleLarge)
@@ -216,11 +240,14 @@ private fun UserHome(ui: UiState, vm: G57ViewModel) {
 private fun AdminHome(ui: UiState, vm: G57ViewModel) {
     LaunchedEffect(Unit) { vm.loadIssues(true) }
     Column(Modifier.fillMaxSize()) {
-        BrandHeader("ADMIN PANEL")
+        BrandHeader("ADMIN PANEL", onMenu = vm::openDriverDevelopers)
         Row(Modifier.padding(horizontal = 20.dp), verticalAlignment = Alignment.CenterVertically) {
             Column(Modifier.weight(1f)) {
                 Text("All Issues", style = MaterialTheme.typography.headlineSmall, fontWeight = FontWeight.Bold)
                 Text("Developer access", color = G57Cyan)
+            }
+            IconButton(onClick = vm::openUserManagement) {
+                Icon(Icons.Default.ManageAccounts, contentDescription = "User management")
             }
             IconButton(onClick = vm::openSolvedUsers) {
                 Icon(Icons.Default.Verified, contentDescription = "Solved users")
@@ -262,6 +289,133 @@ private fun AdminSolvedUsers(ui: UiState, vm: G57ViewModel) {
                 }
             }
         }
+    }
+}
+
+@Composable
+private fun DriverDevelopersScreen(vm: G57ViewModel) {
+    val repositories = listOf(
+        "Noysz / panvk-g99-jm" to "https://github.com/Noysz/panvk-g99-jm",
+        "mexicanbr0auth / mesa-panvk-g57" to "https://github.com/mexicanbr0auth/mesa-panvk-g57",
+        "FristOneRR / FristOneRR-Panvk-Driver" to "https://github.com/FristOneRR/FristOneRR-Panvk-Driver"
+    )
+    Column(Modifier.fillMaxSize()) {
+        BrandHeader("GitHub Devlopers All G57 Drivers") { vm.back() }
+        LazyColumn(
+            modifier = Modifier.weight(1f),
+            contentPadding = PaddingValues(horizontal = 20.dp, vertical = 8.dp),
+            verticalArrangement = Arrangement.spacedBy(14.dp)
+        ) {
+            items(repositories) { (name, url) ->
+                ElevatedCard(
+                    modifier = Modifier.fillMaxWidth(),
+                    colors = CardDefaults.elevatedCardColors(containerColor = G57Card),
+                    shape = RoundedCornerShape(18.dp)
+                ) {
+                    Column(Modifier.padding(18.dp)) {
+                        Row(verticalAlignment = Alignment.CenterVertically) {
+                            Icon(Icons.Default.Code, contentDescription = null, tint = G57Cyan, modifier = Modifier.size(26.dp))
+                            Spacer(Modifier.width(10.dp))
+                            Text(name, fontWeight = FontWeight.Bold, modifier = Modifier.weight(1f))
+                        }
+                        Spacer(Modifier.height(8.dp))
+                        Text(url, color = Color.Gray, style = MaterialTheme.typography.bodySmall)
+                        Spacer(Modifier.height(12.dp))
+                        Button(onClick = { vm.openExternalUrl(url) }, modifier = Modifier.fillMaxWidth()) {
+                            Icon(Icons.Default.OpenInNew, contentDescription = null)
+                            Spacer(Modifier.width(8.dp))
+                            Text("OPEN GITHUB")
+                        }
+                    }
+                }
+            }
+        }
+        Text(
+            "This App Made By Jin woo { PanVK tester }",
+            color = G57Primary,
+            style = MaterialTheme.typography.titleSmall,
+            fontWeight = FontWeight.Bold,
+            modifier = Modifier.fillMaxWidth().padding(horizontal = 18.dp, vertical = 20.dp),
+            textAlign = androidx.compose.ui.text.style.TextAlign.Center
+        )
+    }
+}
+
+@Composable
+private fun AdminUserManagementScreen(ui: UiState, vm: G57ViewModel) {
+    var selectedUser by remember { mutableStateOf<Profile?>(null) }
+    LaunchedEffect(Unit) { vm.loadUsers(); vm.loadIssues(true) }
+    Column(Modifier.fillMaxSize()) {
+        BrandHeader("USER MANAGEMENT") { vm.back() }
+        Text(
+            "Registered profiles • deleting a user removes their linked issues and notifications.",
+            color = Color.Gray,
+            style = MaterialTheme.typography.bodySmall,
+            modifier = Modifier.padding(horizontal = 20.dp, vertical = 4.dp)
+        )
+        ui.success?.let { Text(it, color = G57Cyan, modifier = Modifier.padding(horizontal = 20.dp, vertical = 6.dp)) }
+        ui.error?.let { Text(it, color = MaterialTheme.colorScheme.error, modifier = Modifier.padding(horizontal = 20.dp, vertical = 6.dp)) }
+        if (ui.loading && ui.userProfiles.isEmpty()) {
+            Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) { CircularProgressIndicator() }
+        } else if (ui.userProfiles.isEmpty()) {
+            Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) { Text("No profiles found.", color = Color.Gray) }
+        } else {
+            LazyColumn(
+                contentPadding = PaddingValues(20.dp),
+                verticalArrangement = Arrangement.spacedBy(12.dp)
+            ) {
+                items(ui.userProfiles, key = { it.id }) { profile ->
+                    ElevatedCard(
+                        modifier = Modifier.fillMaxWidth(),
+                        colors = CardDefaults.elevatedCardColors(containerColor = G57Card),
+                        shape = RoundedCornerShape(16.dp)
+                    ) {
+                        Column(Modifier.padding(16.dp)) {
+                            Row(verticalAlignment = Alignment.CenterVertically) {
+                                Icon(
+                                    if (profile.role == "admin") Icons.Default.AdminPanelSettings else Icons.Default.Person,
+                                    contentDescription = null,
+                                    tint = if (profile.role == "admin") G57Primary else G57Cyan
+                                )
+                                Spacer(Modifier.width(10.dp))
+                                Column(Modifier.weight(1f)) {
+                                    Text(profile.username, fontWeight = FontWeight.Bold)
+                                    Text("Role: ${profile.role}", color = Color.Gray, style = MaterialTheme.typography.bodySmall)
+                                    Text("Issues: ${ui.issues.count { it.userId == profile.id }}", color = Color.Gray, style = MaterialTheme.typography.bodySmall)
+                                    profile.createdAt?.let { Text("Created: ${it.take(10)}", color = Color.Gray, style = MaterialTheme.typography.bodySmall) }
+                                }
+                            }
+                            if (profile.role != "admin" && profile.id != ui.profile?.id) {
+                                Spacer(Modifier.height(10.dp))
+                                OutlinedButton(
+                                    onClick = { selectedUser = profile },
+                                    enabled = !ui.loading,
+                                    modifier = Modifier.fillMaxWidth(),
+                                    colors = ButtonDefaults.outlinedButtonColors(contentColor = MaterialTheme.colorScheme.error)
+                                ) {
+                                    Icon(Icons.Default.DeleteForever, contentDescription = null)
+                                    Spacer(Modifier.width(8.dp))
+                                    Text("DELETE USER")
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+    selectedUser?.let { profile ->
+        AlertDialog(
+            onDismissRequest = { selectedUser = null },
+            title = { Text("Delete ${profile.username}?") },
+            text = { Text("This permanently deletes the Auth account, profile, issues, attachments metadata and notifications. This cannot be undone.") },
+            confirmButton = {
+                TextButton(onClick = { selectedUser = null; vm.deleteUser(profile) }, enabled = !ui.loading) {
+                    Text("DELETE", color = MaterialTheme.colorScheme.error)
+                }
+            },
+            dismissButton = { TextButton(onClick = { selectedUser = null }) { Text("CANCEL") } }
+        )
     }
 }
 

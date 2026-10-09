@@ -95,10 +95,11 @@ jobs:
           {
             echo "### Verified G57 APK"
             echo ""
-            echo "- Package: `com.g57.issuehub`"
-            echo "- Version: `0.2.8 (9)`"
+            echo "- Package: com.g57.issuehub"
+            echo "- Version: 0.2.8 (9)"
             echo "- APK size: $(stat -c '%s bytes' "$APK")"
-            echo "- SHA-256: `$(sha256sum "$APK" | cut -d ' ' -f 1)`"
+            SHA256="$(sha256sum "$APK" | cut -d ' ' -f 1)"
+  echo "- SHA-256: $SHA256"
             echo "- ZIP structure: passed"
             echo "- APK signature: passed"
           } >> "$GITHUB_STEP_SUMMARY"
@@ -114,19 +115,3 @@ jobs:
           if-no-files-found: error
           compression-level: 0
 
-      - name: Publish G57 v0.2.8 GitHub Release
-        if: github.event_name == 'push' && github.ref == 'refs/heads/main' && contains(github.event.head_commit.message, 'Prepare G57 0.2.8 release')
-        uses: softprops/action-gh-release@v2
-        with:
-          tag_name: v0.2.8
-          name: G57 v0.2.8
-          target_commitish: main
-          body: |
-            G57 0.2.8 Android APK.
-
-            This is a debug-signed APK built by GitHub Actions. Verify the SHA-256 checksum before installing.
-          files: |
-            app/build/outputs/apk/debug/app-debug.apk
-            app-debug.apk.sha256
-          overwrite_files: true
-          make_latest: true

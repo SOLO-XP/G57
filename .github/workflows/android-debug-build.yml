@@ -54,8 +54,17 @@ jobs:
       - name: Accept Android SDK licenses
         shell: bash
         run: |
-          set -euo pipefail
+          # sdkmanager closes the pipe after consuming its prompts; with pipefail
+          # enabled, 'yes' receiving SIGPIPE can incorrectly fail this step.
+          set +e
+          set +o pipefail
           yes | sdkmanager --licenses >/dev/null
+          sdk_status=${PIPESTATUS[1]}
+          set -o pipefail
+          if [[ "$sdk_status" -ne 0 ]]; then
+            echo "::error::sdkmanager --licenses failed with exit code $sdk_status"
+            exit "$sdk_status"
+          fi
 
       - name: Install required Android SDK packages
         shell: bash

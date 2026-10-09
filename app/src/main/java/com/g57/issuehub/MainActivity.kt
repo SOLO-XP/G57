@@ -91,7 +91,7 @@ fun G57App(vm: G57ViewModel = viewModel()) {
 }
 
 @Composable
-private fun BrandHeader(subtitle: String? = null, onBack: (() -> Unit)? = null, onMenu: (() -> Unit)? = null) {
+private fun BrandHeader(subtitle: String? = null, onMenu: (() -> Unit)? = null, onBack: (() -> Unit)? = null) {
     Row(Modifier.fillMaxWidth().padding(20.dp), verticalAlignment = Alignment.CenterVertically) {
         if (onMenu != null) {
             IconButton(onClick = onMenu, modifier = Modifier.padding(end = 4.dp)) {

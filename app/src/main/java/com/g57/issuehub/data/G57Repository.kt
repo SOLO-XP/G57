@@ -1,5 +1,7 @@
 package com.g57.issuehub.data
 
+import com.g57.issuehub.BuildConfig
+
 import io.github.jan.supabase.auth.auth
 import io.github.jan.supabase.auth.providers.builtin.Email
 import io.github.jan.supabase.postgrest.from
@@ -8,6 +10,10 @@ import io.github.jan.supabase.postgrest.query.Order
 import io.github.jan.supabase.storage.storage
 import kotlinx.serialization.json.buildJsonObject
 import kotlinx.serialization.json.put
+import java.net.HttpURLConnection
+import java.net.URL
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
 import kotlin.time.Duration.Companion.minutes
 
 class G57Repository {
@@ -24,6 +30,62 @@ class G57Repository {
         }
         val userId = sb.auth.currentUserOrNull()?.id ?: error("No authenticated user")
         return profile(userId)
+    }
+
+    suspend fun signInUser(username: String, password: String): Profile {
+        val clean = validateUsername(username)
+        require(password.isNotBlank()) { "Enter your password." }
+        sb.auth.signInWith(Email) {
+            email = "$clean@g57.app"
+            this.password = password
+        }
+        val userId = sb.auth.currentUserOrNull()?.id ?: error("No authenticated user")
+        return profile(userId)
+    }
+
+    suspend fun registerUser(username: String, password: String): Profile {
+        val clean = validateUsername(username)
+        require(password.length >= 8) { "Password must be at least 8 characters." }
+        sb.auth.signUpWith(Email) {
+            email = "$clean@g57.app"
+            this.password = password
+            data = buildJsonObject { put("username", clean) }
+        }
+        val userId = sb.auth.currentUserOrNull()?.id
+            ?: error("Account created, but no session was returned. In Supabase, disable email confirmation for username-only accounts.")
+        return profile(userId)
+    }
+
+    private fun validateUsername(username: String): String {
+        val clean = username.trim().lowercase()
+        require(clean.length in 3..24) { "Username must be 3-24 characters." }
+        require(clean.all { it.isLetterOrDigit() || it == '_' || it == '-' }) { "Use letters, numbers, _ or -." }
+        return clean
+    }
+
+    suspend fun deleteAuthUser(userId: String) = withContext(Dispatchers.IO) {
+        val session = sb.auth.currentSessionOrNull() ?: error("Admin session expired. Sign in again.")
+        val endpoint = BuildConfig.SUPABASE_URL.trimEnd('/') + "/functions/v1/admin-delete-user"
+        val connection = (URL(endpoint).openConnection() as HttpURLConnection)
+        try {
+            connection.requestMethod = "POST"
+            connection.connectTimeout = 15000
+            connection.readTimeout = 20000
+            connection.doOutput = true
+            connection.setRequestProperty("Content-Type", "application/json")
+            connection.setRequestProperty("apikey", BuildConfig.SUPABASE_PUBLISHABLE_KEY)
+            connection.setRequestProperty("Authorization", "Bearer ${session.accessToken}")
+            connection.outputStream.use { it.write("{\"userId\":\"$userId\"}".toByteArray(Charsets.UTF_8)) }
+            val status = connection.responseCode
+            if (status !in 200..299) {
+                val errorText = runCatching {
+                    (connection.errorStream ?: connection.inputStream).bufferedReader().use { it.readText() }
+                }.getOrDefault("HTTP $status")
+                error("Delete failed (HTTP $status): $errorText")
+            }
+        } finally {
+            connection.disconnect()
+        }
     }
 
     suspend fun enterUser(username: String): Profile {

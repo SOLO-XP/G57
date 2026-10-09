@@ -21,6 +21,8 @@ sealed interface ScreenState {
     data class UserIssue(val issue: Issue) : ScreenState
     data object AdminHome : ScreenState
     data object AdminSolvedUsers : ScreenState
+    data object AdminUserManagement : ScreenState
+    data object DriverDevelopers : ScreenState
     data class AdminIssue(val issue: Issue) : ScreenState
 }
 
@@ -44,6 +46,7 @@ data class UiState(
     val username: String = "",
     val password: String = "",
     val loginRole: String = "user",
+    val userCreateAccount: Boolean = false,
     val loading: Boolean = false,
     val error: String? = null,
     val success: String? = null,
@@ -52,6 +55,7 @@ data class UiState(
     val attachments: List<Attachment> = emptyList(),
     val notifications: List<Notification> = emptyList(),
     val resolvedUsers: List<ResolvedUser> = emptyList(),
+    val userProfiles: List<Profile> = emptyList(),
     val selectedFiles: List<PickedFile> = emptyList(),
     val openUrl: String? = null,
     val title: String = "",
@@ -102,7 +106,8 @@ class G57ViewModel(app: Application) : AndroidViewModel(app) {
         }
     }
 
-    fun setLoginRole(role: String) = update { copy(loginRole = role, password = "", error = null) }
+    fun setLoginRole(role: String) = update { copy(loginRole = role, password = "", userCreateAccount = false, error = null) }
+    fun setUserCreateAccount(value: Boolean) = update { copy(userCreateAccount = value, password = "", error = null, success = null) }
     fun setUsername(v: String) = update { copy(username = v, error = null) }
     fun setPassword(v: String) = update { copy(password = v, error = null) }
     fun setField(field: String, v: String) = update {
@@ -128,13 +133,18 @@ class G57ViewModel(app: Application) : AndroidViewModel(app) {
         val u = _ui.value.username.trim()
         val p = _ui.value.password
         val requestedRole = _ui.value.loginRole
+        val createAccount = _ui.value.userCreateAccount
 
         if (u.isBlank()) {
             update { copy(error = "Enter a username.") }
             return@launch
         }
-        if (requestedRole == "admin" && p.isBlank()) {
-            update { copy(error = "Enter the admin password.") }
+        if (p.isBlank()) {
+            update { copy(error = if (requestedRole == "admin") "Enter the admin password." else "Enter your password.") }
+            return@launch
+        }
+        if (requestedRole == "user" && createAccount && p.length < 8) {
+            update { copy(error = "Choose a password with at least 8 characters.") }
             return@launch
         }
         if (!SupabaseProvider.enabled) {
@@ -145,8 +155,11 @@ class G57ViewModel(app: Application) : AndroidViewModel(app) {
         update { copy(loading = true, error = null, success = null) }
 
         runCatching {
-            if (requestedRole == "admin") repo.signInAdmin(u, p)
-            else repo.enterUser(u)
+            when {
+                requestedRole == "admin" -> repo.signInAdmin(u, p)
+                createAccount -> repo.registerUser(u, p)
+                else -> repo.signInUser(u, p)
+            }
         }.onSuccess { profile ->
             if (profile.role != requestedRole) {
                 runCatching { repo.signOut() }
@@ -165,8 +178,10 @@ class G57ViewModel(app: Application) : AndroidViewModel(app) {
         }.onFailure {
             val friendly = if (requestedRole == "admin") {
                 "Invalid username or password."
+            } else if (createAccount) {
+                it.message ?: "Could not create this account. The username may already be taken."
             } else {
-                "Unable to enter with this username. Please try another username."
+                "Unable to sign in. Check your username and password. If this is an old username-only account, an admin must remove that legacy account before you can register it with a password."
             }
             // Keep any existing session intact when a login/profile request fails.
             update { copy(loading = false, error = friendly) }
@@ -200,6 +215,47 @@ class G57ViewModel(app: Application) : AndroidViewModel(app) {
     }
 
     fun openSolvedUsers() = update { copy(screen = ScreenState.AdminSolvedUsers, error = null) }
+    fun openUserManagement() = update { copy(screen = ScreenState.AdminUserManagement, error = null, success = null) }
+    fun openDriverDevelopers() = update { copy(screen = ScreenState.DriverDevelopers, error = null, success = null) }
+    fun openExternalUrl(url: String) = update { copy(openUrl = url) }
+
+    fun loadUsers() = viewModelScope.launch {
+        if (!SupabaseProvider.enabled) {
+            update { copy(userProfiles = emptyList(), error = "Cloud database is not configured in this build.") }
+            return@launch
+        }
+        update { copy(loading = true, error = null) }
+        runCatching { repo.allProfiles() }
+            .onSuccess { profiles -> update { copy(loading = false, userProfiles = profiles.sortedBy { it.username.lowercase() }) } }
+            .onFailure { e -> update { copy(loading = false, error = e.message ?: "Could not load users.") } }
+    }
+
+    fun deleteUser(profile: Profile) = viewModelScope.launch {
+        if (profile.id == _ui.value.profile?.id) {
+            update { copy(error = "You cannot delete the account you are currently using.") }
+            return@launch
+        }
+        if (profile.role == "admin") {
+            update { copy(error = "Admin accounts cannot be deleted from this screen.") }
+            return@launch
+        }
+        update { copy(loading = true, error = null, success = null) }
+        runCatching { repo.deleteAuthUser(profile.id) }
+            .onSuccess {
+                update {
+                    copy(
+                        loading = false,
+                        userProfiles = userProfiles.filterNot { it.id == profile.id },
+                        issues = issues.filterNot { it.userId == profile.id },
+                        success = "Deleted ${profile.username} and their linked cloud data."
+                    )
+                }
+                loadIssues(true)
+            }
+            .onFailure { e ->
+                update { copy(loading = false, error = e.message ?: "Could not delete this user. Deploy the admin-delete-user Supabase function first.") }
+            }
+    }
 
     fun loadSolvedUsers() = viewModelScope.launch {
         if (!SupabaseProvider.enabled) {

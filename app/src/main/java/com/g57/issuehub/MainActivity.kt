@@ -691,6 +691,74 @@ private fun IssueDetails(issue: Issue, ui: UiState, vm: G57ViewModel, admin: Boo
                 ui.error?.let { Text(it, color = MaterialTheme.colorScheme.error) }
             }
 
+            Text(
+                if (admin) "ISSUE CHAT • USER" else "CHAT WITH DEVELOPER",
+                color = G57Cyan,
+                fontWeight = FontWeight.Bold,
+                modifier = Modifier.padding(top = 14.dp)
+            )
+            Text(
+                "Messages are saved to this issue. Only the issue owner and admins can read or reply.",
+                color = Color.Gray,
+                style = MaterialTheme.typography.bodySmall
+            )
+            Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.End) {
+                OutlinedButton(onClick = { vm.refreshIssueMessages(issue.id) }, enabled = !ui.loading) {
+                    Icon(Icons.Default.Refresh, contentDescription = null)
+                    Spacer(Modifier.width(6.dp))
+                    Text("REFRESH CHAT")
+                }
+            }
+            if (ui.chatMessages.isEmpty()) {
+                Text("No messages yet. Start the conversation about this issue.", color = Color.Gray)
+            } else {
+                ui.chatMessages.forEach { message ->
+                    val isMine = message.senderId == ui.profile?.id
+                    Surface(
+                        color = if (isMine) G57Primary.copy(alpha = 0.18f) else G57Card,
+                        shape = RoundedCornerShape(14.dp),
+                        modifier = Modifier.fillMaxWidth()
+                    ) {
+                        Column(Modifier.padding(12.dp), verticalArrangement = Arrangement.spacedBy(5.dp)) {
+                            Text(
+                                when {
+                                    isMine -> "You"
+                                    admin -> issue.userUsername ?: "User"
+                                    else -> "Developer"
+                                },
+                                color = if (isMine) G57Cyan else G57Primary,
+                                fontWeight = FontWeight.Bold
+                            )
+                            Text(message.body)
+                            message.createdAt?.let {
+                                Text(it.replace("T", " ").take(16), color = Color.Gray, style = MaterialTheme.typography.labelSmall)
+                            }
+                        }
+                    }
+                }
+            }
+            OutlinedTextField(
+                value = ui.chatDraft,
+                onValueChange = vm::setChatDraft,
+                label = { Text("Write a message") },
+                placeholder = { Text("Describe the next step or share a test result…") },
+                minLines = 2,
+                maxLines = 5,
+                modifier = Modifier.fillMaxWidth(),
+                enabled = !ui.loading
+            )
+            Button(
+                onClick = { vm.sendIssueMessage(issue.id) },
+                enabled = !ui.loading && ui.chatDraft.isNotBlank(),
+                modifier = Modifier.fillMaxWidth()
+            ) {
+                Icon(Icons.Default.Send, contentDescription = null)
+                Spacer(Modifier.width(8.dp))
+                Text(if (ui.loading) "SENDING…" else "SEND MESSAGE")
+            }
+            ui.error?.let { Text(it, color = MaterialTheme.colorScheme.error, style = MaterialTheme.typography.bodySmall) }
+            ui.success?.let { Text(it, color = G57Cyan, style = MaterialTheme.typography.bodySmall) }
+
             if (admin) {
                 Text("DEVELOPER TOOLS", color = G57Cyan, fontWeight = FontWeight.Bold, modifier = Modifier.padding(top = 14.dp))
                 Box {

@@ -1,98 +1,107 @@
-# G57
+# 🚀 G57 — Mali GPU Issue Hub
 
-**G57** is an Android application for reporting, organizing, and tracking problems related to **Mali GPU drivers and Android PC/emulator gaming environments**.
+<p align="center">
+  <strong>🛠️ Report smarter. Debug faster. Build better drivers.</strong>
+</p>
 
-The goal is simple: make it easy for users to send a complete, useful bug report so developers can reproduce and investigate problems faster.
+<p align="center">
+  <img alt="Platform" src="https://img.shields.io/badge/Platform-Android-3DDC84?logo=android&logoColor=white">
+  <img alt="Language" src="https://img.shields.io/badge/Language-Kotlin-7F52FF?logo=kotlin&logoColor=white">
+  <img alt="Backend" src="https://img.shields.io/badge/Backend-Supabase-3ECF8E?logo=supabase&logoColor=white">
+  <img alt="Version" src="https://img.shields.io/badge/Version-0.2.8-00B8D9">
+  <img alt="Status" src="https://img.shields.io/badge/Focus-Mali%20GPU%20%7C%20Winlator-111827">
+</p>
 
-## What users can report
+**G57** is an Android issue-reporting hub for the **Mali GPU, driver, Winlator, and Android gaming/emulation community**. It helps users send organized reports—with the technical details developers need to investigate crashes, rendering bugs, Vulkan errors, and performance problems.
 
-Users can create an Issue and provide:
+> 🎯 **The mission:** turn “it crashes” into a useful report that helps developers reproduce, diagnose, and fix the problem.
 
-- Game and game version
-- Mali GPU / device information
-- Mali driver version
-- Emulator or compatibility layer
-- DXVK version
-- Wine version
-- Proton version
-- VKD3D / Box64 information
-- Problem type such as crash, black screen, graphics problems, Vulkan errors, or performance issues
-- A clear description and reproduction steps
+## ✨ What can you report?
 
-## Attachments
+Create an issue with the details that matter:
 
-An Issue can include supporting files such as:
+- 🎮 Game name and version
+- 📱 Device and Mali GPU information
+- ⚙️ Graphics driver and emulator / compatibility layer
+- 🧩 DXVK, Wine, Proton, VKD3D, and Box64 versions
+- 🐛 Crash, black screen, broken textures, Vulkan errors, or FPS/performance issues
+- 📝 Clear descriptions and steps to reproduce the problem
 
-- Screenshots
-- Videos
-- Log files
-- Text, JSON, ZIP, and other diagnostic files
+## 📎 Attach logs and evidence
 
-Each Issue keeps its attachments grouped together so developers can understand exactly which files belong to which report.
+Give developers more than just a description. Issues can include supporting files such as:
 
-## User and developer access
+- 📸 Screenshots
+- 🎥 Videos
+- 📄 Log and text files
+- 🗂️ JSON, ZIP, and other diagnostic attachments
 
-G57 uses one Android application with role-based access.
+Attachments stay associated with their issue, helping developers understand the report and investigate it more efficiently.
 
-**Users**
-- Create Issues
-- View and manage their own Issues
-- Upload diagnostic files
-- Receive notifications when their Issue is resolved
+## 👥 One app, role-based access
 
-**Developers / Admins**
-- View all submitted Issues
-- Review descriptions, device/environment information, logs, images, and videos
-- Update Issue status
-- Add developer notes
-- Manage Issues
-- View solved users
+### 🙋 Users
+- ➕ Create issue reports
+- 📋 View and manage your own issues
+- 📎 Upload logs and evidence
+- 🔔 Receive in-app notifications when an issue is marked as solved
 
-Users cannot access other users' private Issues or attachments.
+### 🧑‍💻 Developers / Admins
+- 🗃️ Review submitted issues
+- 🔍 Inspect device details, environment information, logs, screenshots, and videos
+- 🔄 Update issue status and add developer notes
+- 🧰 Manage issues and review solved users
 
-## Issue lifecycle
+🔐 **Privacy matters:** users should only be able to access their own issues and attachments. Authorization must be enforced by the backend and database policies—not just by hiding screens in the app.
 
-Issues can move through statuses such as:
+## 🔄 Issue workflow
 
 `Open → Investigating → Fix in Progress → Testing → Fixed → Closed`
 
-When a developer marks an Issue as solved, the affected user receives an in-app notification when they open G57.
+The workflow helps keep reports organized from the first submission through testing and resolution.
 
-## Technology
+## 🧰 Built with
 
-- Android
-- Kotlin
-- Jetpack Compose
-- Supabase Auth
-- PostgreSQL
-- Supabase Storage
-- PostgreSQL Row Level Security (RLS)
+| Technology | Purpose |
+| --- | --- |
+| 🤖 Android + Kotlin | Native Android app |
+| 🎨 Jetpack Compose | User interface |
+| 🔑 Supabase Auth | Account authentication |
+| 🐘 PostgreSQL | Structured data |
+| ☁️ Supabase Storage | Issue attachments |
+| 🛡️ PostgreSQL RLS | Database access policies |
 
-## Cloud storage
+## 🔐 Security notes
 
-Issue attachments are stored in a private cloud bucket and associated with their Issue. Access is controlled by the application's authorization rules.
+- The Android app must **never contain** the Supabase `service_role` key.
+- Keep privileged credentials in Supabase server-side secrets.
+- Protect issue records and private attachments with verified authorization policies.
+- Review logs and configuration before publishing builds; never commit passwords, tokens, or private keys.
 
-## Project goal
+### 🗑️ Admin user deletion (optional backend setup)
 
-G57 is designed for the Mali GPU / emulator community, with a focus on making bug reports more complete, organized, and useful for driver and emulator developers.
-
----
-
-**G57 — Mali GPU Issue Reporter**
-
-
-## Username accounts and reinstall recovery (v0.2.7)
-
-User accounts now use a username plus password so a user can sign in again after reinstalling the app. New accounts use the internal email form `<username>@g57.app`; users do not need to supply a real email address. In the Supabase Dashboard, disable email confirmation for this username/password flow, because these internal addresses cannot receive confirmation emails.
-
-Older username-only anonymous accounts cannot be securely recovered after app data is removed: Supabase anonymous users cannot prove identity once their local session is gone. For a one-time migration, sign in as admin, open **User Management**, delete the old legacy profile (which frees the username), then register that username again with a password. Future reinstalls should use **Sign In** with that password.
-
-### Secure admin user deletion
-
-The Android app never contains a Supabase service-role key. To enable the admin delete button, deploy the Edge Function in `supabase/functions/admin-delete-user/index.ts`:
+To enable the admin delete-user feature, deploy the Edge Function included in this repository:
 
 ```bash
 supabase functions deploy admin-delete-user
 ```
 
-The function uses the project secret `SUPABASE_SERVICE_ROLE_KEY`, validates the caller's Supabase session and admin profile, removes files associated with the user's issues, then deletes the Auth user. Never put the service-role key in Android app configuration.
+The function expects `SUPABASE_SERVICE_ROLE_KEY` to be configured as a **server-side Supabase secret**. It validates the caller's session and admin profile before performing privileged actions. Never copy this secret into the Android app or public repository.
+
+## 📲 Get G57
+
+➡️ **[Open the latest G57 releases](https://github.com/SOLO-XP/G57/releases/latest)**
+
+Check the release notes and installation instructions before installing a build. Builds distributed as test artifacts may differ from signed production releases.
+
+## 🤝 Help improve Mali gaming
+
+Found a bug? Have useful logs? Testing a driver or compatibility layer?
+
+A clear report can save developers hours. Include your device, driver, game, versions, exact symptoms, and steps to reproduce whenever possible. 🚀
+
+---
+
+<p align="center">
+  <strong>💚 G57 — Better reports. Better debugging. Better Mali gaming.</strong>
+</p>

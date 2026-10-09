@@ -1,21 +1,20 @@
-MIT License
+G57 PROPRIETARY LICENSE
+Copyright (c) 2026 SOLO-XP. All rights reserved.
 
-Copyright (c) 2026 SOLO-XP
+This repository and its source code are proprietary. No license or permission is
+granted to modify, adapt, create derivative works from, reproduce, redistribute,
+republish, sublicense, or commercially exploit the source code or modified
+versions of the software without prior written permission from SOLO-XP.
 
-Permission is hereby granted, free of charge, to any person obtaining a copy
-of this software and associated documentation files (the "Software"), to deal
-in the Software without restriction, including without limitation the rights
-to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-copies of the Software, and to permit persons to whom the Software is
-furnished to do so, subject to the following conditions:
+You may view the source code on GitHub. You may download and use an official,
+unmodified G57 APK made available by SOLO-XP for personal, non-commercial use.
 
-The above copyright notice and this permission notice shall be included in all
-copies or substantial portions of the Software.
+You may not publish modified versions of G57, distribute copies of the source
+code, or claim an unofficial or modified build as an official release.
 
 THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
-SOFTWARE.
+IMPLIED, TO THE MAXIMUM EXTENT PERMITTED BY APPLICABLE LAW.
+
+This license replaces the MIT License for future use of the repository's
+contents. It does not revoke permissions already granted under copies of the
+MIT License distributed before this change.

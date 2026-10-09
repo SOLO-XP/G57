@@ -92,14 +92,14 @@ jobs:
           grep -F "package: name='com.g57.issuehub' versionCode='9' versionName='0.2.8'" apk-badging.txt
 
           sha256sum "$APK" | tee app-debug.apk.sha256
+          SHA256="$(sha256sum "$APK" | cut -d ' ' -f 1)"
           {
             echo "### Verified G57 APK"
             echo ""
             echo "- Package: com.g57.issuehub"
             echo "- Version: 0.2.8 (9)"
             echo "- APK size: $(stat -c '%s bytes' "$APK")"
-            SHA256="$(sha256sum "$APK" | cut -d ' ' -f 1)"
-  echo "- SHA-256: $SHA256"
+            echo "- SHA-256: $SHA256"
             echo "- ZIP structure: passed"
             echo "- APK signature: passed"
           } >> "$GITHUB_STEP_SUMMARY"

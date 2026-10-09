@@ -126,7 +126,7 @@ private fun BrandHeader(subtitle: String? = null, onMenu: (() -> Unit)? = null, 
 @Composable
 private fun LoginScreen(ui: UiState, vm: G57ViewModel) {
     Column(Modifier.fillMaxSize().padding(horizontal = 24.dp), verticalArrangement = Arrangement.Center, horizontalAlignment = Alignment.CenterHorizontally) {
-        Image(painterResource(com.g57.issuehub.R.drawable.g57_logo), "G57 logo", Modifier.size(112.dp))
+        Image(painterResource(com.g57.issuehub.R.drawable.g57_uploaded_logo), "G57 logo", Modifier.size(112.dp))
         Spacer(Modifier.height(12.dp))
         Text("G57", style = MaterialTheme.typography.displaySmall, fontWeight = FontWeight.ExtraBold, color = G57Primary)
         Text("Mali GPU Issue Reporter", color = G57Cyan, style = MaterialTheme.typography.titleMedium)

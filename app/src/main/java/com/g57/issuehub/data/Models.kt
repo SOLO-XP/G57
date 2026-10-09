@@ -63,6 +63,15 @@ data class Notification(
 )
 
 @Serializable
+data class IssueMessage(
+    val id: String,
+    @SerialName("issue_id") val issueId: String,
+    @SerialName("sender_id") val senderId: String,
+    val body: String,
+    @SerialName("created_at") val createdAt: String? = null
+)
+
+@Serializable
 data class CreateIssueInput(
     @SerialName("user_id") val userId: String,
     val title: String,

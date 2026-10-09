@@ -9,10 +9,21 @@
   <img alt="Language" src="https://img.shields.io/badge/Language-Kotlin-7F52FF?logo=kotlin&logoColor=white">
   <img alt="Backend" src="https://img.shields.io/badge/Backend-Supabase-3ECF8E?logo=supabase&logoColor=white">
   <img alt="GPU Families" src="https://img.shields.io/badge/Mali-G57%20%7C%20G52%20%7C%20G615%20%7C%20G720-111827">
-  <img alt="Version" src="https://img.shields.io/badge/Version-0.1%20Beta-00B8D9">
+  <img alt="Version" src="https://img.shields.io/badge/Version-0.2%20Beta-00B8D9">
 </p>
 
-**GMailGPU** is an Android community hub for reporting Mali GPU driver issues and finding relevant open-source driver projects for **G57, G52, G615, and G720**. It helps users organize crash reports, Vulkan errors, rendering glitches, black screens, and performance problems with useful diagnostic evidence.
+**GMailGPU 0.2 Beta** is an Android community hub for reporting Mali GPU driver issues and finding relevant open-source driver projects for **G57, G52, G615, and G720**. It helps users organize crash reports, Vulkan errors, rendering glitches, black screens, and performance problems with useful diagnostic evidence.
+
+## ✨ Version 0.2 Beta highlights
+
+- 💬 Issue chat inside each report, including message history and manual refresh.
+- 🧑‍💻 User/developer communication based on account permissions.
+- 🎨 UI improvements for a cleaner, more consistent experience.
+- 🏷️ Renamed to GMailGPU to make clear this is the same project with broader Mali GPU coverage.
+- 🎮 Report issues related to Mali-G57, G52, G615, and G720.
+- 🔐 Supabase Row Level Security policies for issue chat.
+
+> GPU categories are available for issue reporting. This does not guarantee that every listed GPU has a working custom driver.
 
 ## 🎮 Supported GPU project categories
 
@@ -61,7 +72,7 @@ Include the details that help reproduce a problem:
 
 ## 📲 Download
 
-➡️ [View GMailGPU builds and releases](https://github.com/SOLO-XP/G57/releases)
+➡️ [View GMailGPU builds and releases](https://github.com/SOLO-XP/GMailGPU/actions/workflows/build-apk.yml)
 
 This project is in **early beta**. Test builds may be debug-signed and are not production releases. Back up important data and review the release notes before installing.
 

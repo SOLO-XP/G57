@@ -1,107 +1,74 @@
-# 🚀 G57 — Mali GPU Issue Hub
+# 🚀 GMailGPU — Mali GPU Community Hub
 
 <p align="center">
-  <strong>🛠️ Report smarter. Debug faster. Build better drivers.</strong>
+  <strong>🛠️ Better reports. Smarter debugging. Stronger Mali gaming.</strong>
 </p>
 
 <p align="center">
   <img alt="Platform" src="https://img.shields.io/badge/Platform-Android-3DDC84?logo=android&logoColor=white">
   <img alt="Language" src="https://img.shields.io/badge/Language-Kotlin-7F52FF?logo=kotlin&logoColor=white">
   <img alt="Backend" src="https://img.shields.io/badge/Backend-Supabase-3ECF8E?logo=supabase&logoColor=white">
-  <img alt="Version" src="https://img.shields.io/badge/Version-0.2.8-00B8D9">
-  <img alt="Status" src="https://img.shields.io/badge/Focus-Mali%20GPU%20%7C%20Winlator-111827">
+  <img alt="GPU Families" src="https://img.shields.io/badge/Mali-G57%20%7C%20G52%20%7C%20G615%20%7C%20G720-111827">
+  <img alt="Version" src="https://img.shields.io/badge/Version-0.1%20Beta-00B8D9">
 </p>
 
-**G57** is an Android issue-reporting hub for the **Mali GPU, driver, Winlator, and Android gaming/emulation community**. It helps users send organized reports—with the technical details developers need to investigate crashes, rendering bugs, Vulkan errors, and performance problems.
+**GMailGPU** is an Android community hub for reporting Mali GPU driver issues and finding relevant open-source driver projects for **G57, G52, G615, and G720**. It helps users organize crash reports, Vulkan errors, rendering glitches, black screens, and performance problems with useful diagnostic evidence.
 
-> 🎯 **The mission:** turn “it crashes” into a useful report that helps developers reproduce, diagnose, and fix the problem.
+## 🎮 Supported GPU project categories
 
-## ✨ What can you report?
+These links lead to open-source driver repositories maintained by their respective project owners. They are community resources that may help users and developers investigate issues; they do not guarantee support or a fix.
 
-Create an issue with the details that matter:
+### 🟣 Mali-G57
+- [Noysz / panvk-g99-jm](https://github.com/Noysz/panvk-g99-jm)
+- [mexicanbr0auth / mesa-panvk-g57](https://github.com/mexicanbr0auth/mesa-panvk-g57)
+- [FristOneRR / FristOneRR-Panvk-Driver](https://github.com/FristOneRR/FristOneRR-Panvk-Driver)
 
+### 🔵 Mali-G52
+- [LukeValen / panvk-mali-g52](https://github.com/LukeValen/panvk-mali-g52)
+
+### 🟢 Mali-G615
+- [GunaCharanTeja / panvk-kbase-android](https://github.com/GunaCharanTeja/panvk-kbase-android)
+
+### 🟠 Mali-G720
+- [wonderkast02 / panvk-g720-kbase-csf](https://github.com/wonderkast02/panvk-g720-kbase-csf)
+
+## ✨ Issue reporting
+
+Include the details that help reproduce a problem:
+
+- 📱 Device model, Android version, SoC, and GPU
 - 🎮 Game name and version
-- 📱 Device and Mali GPU information
-- ⚙️ Graphics driver and emulator / compatibility layer
-- 🧩 DXVK, Wine, Proton, VKD3D, and Box64 versions
-- 🐛 Crash, black screen, broken textures, Vulkan errors, or FPS/performance issues
-- 📝 Clear descriptions and steps to reproduce the problem
+- ⚙️ Driver, emulator, Wine, DXVK, VKD3D, and Box64 versions
+- 🐛 Exact symptoms: crash, black screen, broken textures, Vulkan error, or low FPS
+- 📎 Screenshots, videos, logs, and steps to reproduce
 
-## 📎 Attach logs and evidence
+## 👥 Account roles
 
-Give developers more than just a description. Issues can include supporting files such as:
-
-- 📸 Screenshots
-- 🎥 Videos
-- 📄 Log and text files
-- 🗂️ JSON, ZIP, and other diagnostic attachments
-
-Attachments stay associated with their issue, helping developers understand the report and investigate it more efficiently.
-
-## 👥 One app, role-based access
-
-### 🙋 Users
-- ➕ Create issue reports
-- 📋 View and manage your own issues
-- 📎 Upload logs and evidence
-- 🔔 Receive in-app notifications when an issue is marked as solved
-
-### 🧑‍💻 Developers / Admins
-- 🗃️ Review submitted issues
-- 🔍 Inspect device details, environment information, logs, screenshots, and videos
-- 🔄 Update issue status and add developer notes
-- 🧰 Manage issues and review solved users
-
-🔐 **Privacy matters:** users should only be able to access their own issues and attachments. Authorization must be enforced by the backend and database policies—not just by hiding screens in the app.
+- 🙋 **Users:** submit issues, attach evidence, and track their own reports.
+- 🧑‍💻 **Developers/Admins:** review reports, inspect diagnostic files, update statuses, and add troubleshooting notes.
 
 ## 🔄 Issue workflow
 
 `Open → Investigating → Fix in Progress → Testing → Fixed → Closed`
 
-The workflow helps keep reports organized from the first submission through testing and resolution.
+## 🧰 Technology
 
-## 🧰 Built with
+- 🤖 Android + Kotlin
+- 🎨 Jetpack Compose
+- 🔑 Supabase Auth
+- 🐘 PostgreSQL and Row Level Security
+- ☁️ Supabase Storage for issue attachments
 
-| Technology | Purpose |
-| --- | --- |
-| 🤖 Android + Kotlin | Native Android app |
-| 🎨 Jetpack Compose | User interface |
-| 🔑 Supabase Auth | Account authentication |
-| 🐘 PostgreSQL | Structured data |
-| ☁️ Supabase Storage | Issue attachments |
-| 🛡️ PostgreSQL RLS | Database access policies |
+## 📲 Download
 
-## 🔐 Security notes
+➡️ [View GMailGPU builds and releases](https://github.com/SOLO-XP/G57/releases)
 
-- The Android app must **never contain** the Supabase `service_role` key.
-- Keep privileged credentials in Supabase server-side secrets.
-- Protect issue records and private attachments with verified authorization policies.
-- Review logs and configuration before publishing builds; never commit passwords, tokens, or private keys.
+This project is in **early beta**. Test builds may be debug-signed and are not production releases. Back up important data and review the release notes before installing.
 
-### 🗑️ Admin user deletion (optional backend setup)
+## 🤝 Community driver resources
 
-To enable the admin delete-user feature, deploy the Edge Function included in this repository:
-
-```bash
-supabase functions deploy admin-delete-user
-```
-
-The function expects `SUPABASE_SERVICE_ROLE_KEY` to be configured as a **server-side Supabase secret**. It validates the caller's session and admin profile before performing privileged actions. Never copy this secret into the Android app or public repository.
-
-## 📲 Get G57
-
-➡️ **[Open the latest G57 releases](https://github.com/SOLO-XP/G57/releases/latest)**
-
-Check the release notes and installation instructions before installing a build. Builds distributed as test artifacts may differ from signed production releases.
-
-## 🤝 Help improve Mali gaming
-
-Found a bug? Have useful logs? Testing a driver or compatibility layer?
-
-A clear report can save developers hours. Include your device, driver, game, versions, exact symptoms, and steps to reproduce whenever possible. 🚀
+The linked projects are maintained independently by their respective developers. Please open technical questions or bug reports in the appropriate repository and include clear logs and reproduction steps.
 
 ---
 
-<p align="center">
-  <strong>💚 G57 — Better reports. Better debugging. Better Mali gaming.</strong>
-</p>
+<p align="center"><strong>💚 GMailGPU — G57 • G52 • G615 • G720</strong></p>

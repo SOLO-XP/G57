@@ -330,14 +330,34 @@ private fun DriverDevelopersScreen(vm: G57ViewModel) {
                 }
             }
         }
-        Text(
-            "This App Made By Jin woo { PanVK tester }",
-            color = G57Primary,
-            style = MaterialTheme.typography.titleSmall,
-            fontWeight = FontWeight.Bold,
-            modifier = Modifier.fillMaxWidth().padding(horizontal = 18.dp, vertical = 20.dp),
-            textAlign = androidx.compose.ui.text.style.TextAlign.Center
-        )
+        Column(
+            modifier = Modifier.fillMaxWidth().padding(horizontal = 18.dp, vertical = 12.dp),
+            horizontalAlignment = Alignment.CenterHorizontally
+        ) {
+            Button(
+                onClick = { vm.openExternalUrl("https://github.com/GunaCharanTeja/WinlatorMali") },
+                modifier = Modifier.fillMaxWidth()
+            ) {
+                Icon(Icons.Default.Download, contentDescription = null)
+                Spacer(Modifier.width(8.dp))
+                Text("Download Winlator Mali Charan")
+            }
+            Spacer(Modifier.height(12.dp))
+            Text(
+                "Contact Us on Telegram",
+                color = G57Cyan,
+                style = MaterialTheme.typography.titleSmall,
+                fontWeight = FontWeight.Bold
+            )
+            Text(
+                "Jin woo { PanVK tester }",
+                color = G57Primary,
+                style = MaterialTheme.typography.titleSmall,
+                fontWeight = FontWeight.Bold,
+                modifier = Modifier.padding(top = 4.dp),
+                textAlign = androidx.compose.ui.text.style.TextAlign.Center
+            )
+        }
     }
 }
 

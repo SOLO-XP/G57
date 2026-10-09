@@ -113,3 +113,20 @@ jobs:
             apk-badging.txt
           if-no-files-found: error
           compression-level: 0
+
+      - name: Publish G57 v0.2.8 GitHub Release
+        if: github.event_name == 'push' && github.ref == 'refs/heads/main' && contains(github.event.head_commit.message, 'Prepare G57 0.2.8 release')
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: v0.2.8
+          name: G57 v0.2.8
+          target_commitish: main
+          body: |
+            G57 0.2.8 Android APK.
+
+            This is a debug-signed APK built by GitHub Actions. Verify the SHA-256 checksum before installing.
+          files: |
+            app/build/outputs/apk/debug/app-debug.apk
+            app-debug.apk.sha256
+          overwrite_files: true
+          make_latest: true

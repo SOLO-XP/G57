@@ -382,6 +382,7 @@ class G57ViewModel(app: Application) : AndroidViewModel(app) {
             copy(
                 screen = if (admin) ScreenState.AdminIssue(issue) else ScreenState.UserIssue(issue),
                 attachments = emptyList(),
+                selectedFiles = emptyList(),
                 loading = true,
                 error = null
             )
@@ -393,6 +394,38 @@ class G57ViewModel(app: Application) : AndroidViewModel(app) {
         runCatching { repo.attachments(issue.id) }
             .onSuccess { files -> update { copy(loading = false, attachments = files) } }
             .onFailure { e -> update { copy(loading = false, error = e.message) } }
+    }
+
+    fun uploadAdditionalFiles(issueId: String) = viewModelScope.launch {
+        val files = _ui.value.selectedFiles
+        if (files.isEmpty()) {
+            update { copy(error = "Choose at least one file first.") }
+            return@launch
+        }
+        if (!SupabaseProvider.enabled) {
+            update { copy(error = "File uploads require the cloud database.") }
+            return@launch
+        }
+        update { copy(loading = true, error = null, success = null) }
+        runCatching {
+            uploadFiles(issueId, files)
+            repo.attachments(issueId)
+        }.onSuccess { refreshed ->
+            update {
+                copy(
+                    loading = false,
+                    attachments = refreshed,
+                    selectedFiles = emptyList(),
+                    success = "Files added to this issue."
+                )
+            }
+        }.onFailure { e ->
+            runCatching { repo.attachments(issueId) }.onSuccess { refreshed ->
+                update { copy(loading = false, attachments = refreshed, error = "Some files may have uploaded. ${e.message ?: "Upload failed."}") }
+            }.onFailure {
+                update { copy(loading = false, error = e.message ?: "Upload failed. Please try again.") }
+            }
+        }
     }
 
     fun updateStatus(issueId: String, status: String) = viewModelScope.launch {

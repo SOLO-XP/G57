@@ -63,7 +63,8 @@ object DiagnosticCollector {
         val version = runCatching {
             val info = if (Build.VERSION.SDK_INT >= 33) context.packageManager.getPackageInfo(context.packageName, android.content.pm.PackageManager.PackageInfoFlags.of(0))
                 else context.packageManager.getPackageInfo(context.packageName, 0)
-            "${info.versionName ?: "unknown"} (${info.longVersionCode})"
+            val versionCode = if (Build.VERSION.SDK_INT >= 28) info.longVersionCode else info.versionCode.toLong()
+            "${info.versionName ?: "unknown"} ($versionCode)"
         }.getOrDefault("unknown")
         return DeviceSnapshot(
             manufacturer = Build.MANUFACTURER.ifBlank { "Unknown" },

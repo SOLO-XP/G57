@@ -281,7 +281,8 @@ class G57ViewModel(app: Application) : AndroidViewModel(app) {
             val file = DiagnosticCollector.createLogBundle(
                 getApplication(),
                 redactSensitive = state.redactSensitiveLogs,
-                includeAppLogcat = state.collectAppLogsEnabled
+                includeAppLogcat = state.collectAppLogsEnabled,
+                includeDeviceDetails = state.includeDeviceDiagnostics
             )
             addFiles(listOf(file))
             update { copy(success = "Log bundle created. Review it before uploading.", error = null) }

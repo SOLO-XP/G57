@@ -72,6 +72,8 @@ data class UiState(
     val description: String = "",
     val problemType: String = "Crash",
     val game: String = "",
+    val gpu: String = "Not detected — verify manually",
+    val soc: String = "",
     val driver: String = "Mali 26.2",
     val emulator: String = "Winlator",
     val emulatorVersion: String = "",
@@ -90,11 +92,14 @@ class G57ViewModel(app: Application) : AndroidViewModel(app) {
 
     init {
         val prefs = getApplication<Application>().getSharedPreferences("gmailgpu_settings", 0)
+        val snapshot = DiagnosticCollector.snapshot(getApplication())
         _ui.value = _ui.value.copy(
             themeChoice = prefs.getString("theme_choice", "Violet") ?: "Violet",
             includeDeviceDiagnostics = prefs.getBoolean("include_device_diagnostics", true),
             collectAppLogsEnabled = prefs.getBoolean("collect_app_logs", false),
-            redactSensitiveLogs = prefs.getBoolean("redact_sensitive_logs", true)
+            redactSensitiveLogs = prefs.getBoolean("redact_sensitive_logs", true),
+            gpu = snapshot.gpu,
+            soc = snapshot.soc
         )
         restoreSession()
     }
@@ -132,6 +137,8 @@ class G57ViewModel(app: Application) : AndroidViewModel(app) {
             "title" -> copy(title = v)
             "description" -> copy(description = v)
             "game" -> copy(game = v)
+            "gpu" -> copy(gpu = v)
+            "soc" -> copy(soc = v)
             "driver" -> copy(driver = v)
             "emulator" -> copy(emulator = v)
             "emulatorVersion" -> copy(emulatorVersion = v)
@@ -410,8 +417,8 @@ class G57ViewModel(app: Application) : AndroidViewModel(app) {
                     proton = s.proton.ifBlank { null },
                     vkd3d = s.vkd3d.ifBlank { null },
                     box64 = s.box64.ifBlank { null },
-                    gpu = deviceSnapshot?.gpu ?: "Not shared by user",
-                    soc = deviceSnapshot?.soc ?: "Not shared by user",
+                    gpu = if (deviceSnapshot != null) s.gpu.ifBlank { deviceSnapshot.gpu } else "Not shared by user",
+                    soc = if (deviceSnapshot != null) s.soc.ifBlank { deviceSnapshot.soc } else "Not shared by user",
                     androidVersion = deviceSnapshot?.androidVersion ?: "Not shared by user",
                     deviceModel = deviceSnapshot?.let { "${it.manufacturer} ${it.model}" } ?: "Not shared by user"
                 )

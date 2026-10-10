@@ -13,6 +13,7 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.delay
 
 sealed interface ScreenState {
     data object Login : ScreenState
@@ -46,6 +47,10 @@ data class ResolvedUser(
 data class UiState(
     val screen: ScreenState = ScreenState.Login,
     val themeChoice: String = "Violet",
+    val includeDeviceDiagnostics: Boolean = true,
+    val collectAppLogsEnabled: Boolean = false,
+    val redactSensitiveLogs: Boolean = true,
+    val uploadProgress: String? = null,
     val username: String = "",
     val password: String = "",
     val loginRole: String = "user",
@@ -84,7 +89,13 @@ class G57ViewModel(app: Application) : AndroidViewModel(app) {
     val ui: StateFlow<UiState> = _ui.asStateFlow()
 
     init {
-        _ui.value = _ui.value.copy(themeChoice = getApplication<Application>().getSharedPreferences("gmailgpu_settings", 0).getString("theme_choice", "Violet") ?: "Violet")
+        val prefs = getApplication<Application>().getSharedPreferences("gmailgpu_settings", 0)
+        _ui.value = _ui.value.copy(
+            themeChoice = prefs.getString("theme_choice", "Violet") ?: "Violet",
+            includeDeviceDiagnostics = prefs.getBoolean("include_device_diagnostics", true),
+            collectAppLogsEnabled = prefs.getBoolean("collect_app_logs", false),
+            redactSensitiveLogs = prefs.getBoolean("redact_sensitive_logs", true)
+        )
         restoreSession()
     }
 
@@ -232,6 +243,46 @@ class G57ViewModel(app: Application) : AndroidViewModel(app) {
         update { copy(themeChoice = value) }
     }
 
+    fun setIncludeDeviceDiagnostics(value: Boolean) {
+        getApplication<Application>().getSharedPreferences("gmailgpu_settings", 0).edit().putBoolean("include_device_diagnostics", value).apply()
+        update { copy(includeDeviceDiagnostics = value) }
+    }
+
+    fun setCollectAppLogsEnabled(value: Boolean) {
+        getApplication<Application>().getSharedPreferences("gmailgpu_settings", 0).edit().putBoolean("collect_app_logs", value).apply()
+        update { copy(collectAppLogsEnabled = value) }
+    }
+
+    fun setRedactSensitiveLogs(value: Boolean) {
+        getApplication<Application>().getSharedPreferences("gmailgpu_settings", 0).edit().putBoolean("redact_sensitive_logs", value).apply()
+        update { copy(redactSensitiveLogs = value) }
+    }
+
+    fun generateDiagnosticReport() {
+        runCatching {
+            val file = DiagnosticCollector.createReportFile(getApplication(), _ui.value.includeDeviceDiagnostics)
+            addFiles(listOf(file))
+            update { copy(success = "Smart diagnostic report added. Review the attachment before submitting.", error = null) }
+        }.onFailure { e ->
+            update { copy(error = "Could not generate diagnostic report: ${e.message ?: "unknown error"}") }
+        }
+    }
+
+    fun collectAppLogs() {
+        val state = _ui.value
+        runCatching {
+            val file = DiagnosticCollector.createLogBundle(
+                getApplication(),
+                redactSensitive = state.redactSensitiveLogs,
+                includeAppLogcat = state.collectAppLogsEnabled
+            )
+            addFiles(listOf(file))
+            update { copy(success = "Log bundle created. Review it before uploading.", error = null) }
+        }.onFailure { e ->
+            update { copy(error = "Could not collect logs: ${e.message ?: "unknown error"}") }
+        }
+    }
+
     fun openExternalUrl(url: String) = update { copy(openUrl = url) }
 
     fun loadUsers() = viewModelScope.launch {
@@ -338,7 +389,8 @@ class G57ViewModel(app: Application) : AndroidViewModel(app) {
             }
             return@launch
         }
-        update { copy(loading = true, error = null, success = null) }
+        update { copy(loading = true, error = null, success = null, uploadProgress = "Preparing diagnostic submission…") }
+        val deviceSnapshot = if (s.includeDeviceDiagnostics) DiagnosticCollector.snapshot(getApplication()) else null
         runCatching {
             val issue = repo.createIssue(
                 CreateIssueInput(
@@ -356,10 +408,10 @@ class G57ViewModel(app: Application) : AndroidViewModel(app) {
                     proton = s.proton.ifBlank { null },
                     vkd3d = s.vkd3d.ifBlank { null },
                     box64 = s.box64.ifBlank { null },
-                    gpu = "Mali-G57 MC2",
-                    soc = "Unknown",
-                    androidVersion = "Android ${Build.VERSION.RELEASE} (API ${Build.VERSION.SDK_INT})",
-                    deviceModel = "${Build.MANUFACTURER} ${Build.MODEL}"
+                    gpu = deviceSnapshot?.gpu ?: "Not shared by user",
+                    soc = deviceSnapshot?.soc ?: "Not shared by user",
+                    androidVersion = deviceSnapshot?.androidVersion ?: "Not shared by user",
+                    deviceModel = deviceSnapshot?.let { "${it.manufacturer} ${it.model}" } ?: "Not shared by user"
                 )
             )
             try {
@@ -373,6 +425,7 @@ class G57ViewModel(app: Application) : AndroidViewModel(app) {
             update {
                 copy(
                     loading = false,
+                    uploadProgress = null,
                     screen = ScreenState.UserHome,
                     success = "Issue #${issue.issueNumber} submitted.",
                     selectedFiles = emptyList(),
@@ -382,16 +435,31 @@ class G57ViewModel(app: Application) : AndroidViewModel(app) {
                 )
             }
             _ui.value.profile?.id?.let(::loadUserData)
-        }.onFailure { e -> update { copy(loading = false, error = e.message ?: "Submission failed") } }
+        }.onFailure { e -> update { copy(loading = false, uploadProgress = null, error = e.message ?: "Submission failed") } }
     }
 
     private suspend fun uploadFiles(issueId: String, files: List<PickedFile>) {
         val resolver = getApplication<Application>().contentResolver
-        for (file in files) {
-            resolver.openInputStream(file.uri)?.use { input ->
-                repo.uploadAttachment(issueId, file.name, file.mime, input.readBytes(), file.type)
+        files.forEachIndexed { index, file ->
+            val bytes = resolver.openInputStream(file.uri)?.use { input ->
+                input.readBytes()
             } ?: error("Unable to read ${file.name}. Please choose the file again.")
+            require(bytes.size <= 150L * 1024L * 1024L) { "${file.name} exceeds the 150 MB limit." }
+            var lastError: Throwable? = null
+            for (attempt in 1..3) {
+                update { copy(uploadProgress = "Uploading ${index + 1}/${files.size}: ${file.name} (attempt $attempt/3)") }
+                try {
+                    repo.uploadAttachment(issueId, file.name, file.mime, bytes, file.type)
+                    lastError = null
+                    break
+                } catch (e: Throwable) {
+                    lastError = e
+                    if (attempt < 3) delay(700L * attempt)
+                }
+            }
+            if (lastError != null) throw IllegalStateException("Upload failed for ${file.name} after 3 attempts: ${lastError.message ?: "network or storage error"}", lastError)
         }
+        update { copy(uploadProgress = "Verifying uploaded attachments…") }
     }
 
     fun openUserIssue(issue: Issue) = openIssue(issue, admin = false)
@@ -429,7 +497,7 @@ class G57ViewModel(app: Application) : AndroidViewModel(app) {
             update { copy(error = "File uploads require the cloud database.") }
             return@launch
         }
-        update { copy(loading = true, error = null, success = null) }
+        update { copy(loading = true, error = null, success = null, uploadProgress = "Preparing upload…") }
         runCatching {
             uploadFiles(issueId, files)
             repo.attachments(issueId)
@@ -437,6 +505,7 @@ class G57ViewModel(app: Application) : AndroidViewModel(app) {
             update {
                 copy(
                     loading = false,
+                    uploadProgress = null,
                     attachments = refreshed,
                     selectedFiles = emptyList(),
                     success = "Files added to this issue."
@@ -444,9 +513,9 @@ class G57ViewModel(app: Application) : AndroidViewModel(app) {
             }
         }.onFailure { e ->
             runCatching { repo.attachments(issueId) }.onSuccess { refreshed ->
-                update { copy(loading = false, attachments = refreshed, error = "Some files may have uploaded. ${e.message ?: "Upload failed."}") }
+                update { copy(loading = false, uploadProgress = null, attachments = refreshed, error = "Some files may have uploaded. Review attachments, then retry if needed. ${e.message ?: "Upload failed."}") }
             }.onFailure {
-                update { copy(loading = false, error = e.message ?: "Upload failed. Please try again.") }
+                update { copy(loading = false, uploadProgress = null, error = e.message ?: "Upload failed. Please try again.") }
             }
         }
     }

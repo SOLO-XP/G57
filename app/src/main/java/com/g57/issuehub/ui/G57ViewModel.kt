@@ -14,6 +14,8 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
 
 sealed interface ScreenState {
     data object Login : ScreenState
@@ -265,7 +267,7 @@ class G57ViewModel(app: Application) : AndroidViewModel(app) {
         update { copy(redactSensitiveLogs = value) }
     }
 
-    fun generateDiagnosticReport() {
+    fun generateDiagnosticReport() = viewModelScope.launch(Dispatchers.IO) {
         runCatching {
             val file = DiagnosticCollector.createReportFile(getApplication(), _ui.value.includeDeviceDiagnostics)
             addFiles(listOf(file))
@@ -275,7 +277,7 @@ class G57ViewModel(app: Application) : AndroidViewModel(app) {
         }
     }
 
-    fun collectAppLogs() {
+    fun collectAppLogs() = viewModelScope.launch(Dispatchers.IO) {
         val state = _ui.value
         runCatching {
             val file = DiagnosticCollector.createLogBundle(
@@ -451,8 +453,8 @@ class G57ViewModel(app: Application) : AndroidViewModel(app) {
     private suspend fun uploadFiles(issueId: String, files: List<PickedFile>, onFileUploaded: ((PickedFile) -> Unit)? = null) {
         val resolver = getApplication<Application>().contentResolver
         files.forEachIndexed { index, file ->
-            val bytes = resolver.openInputStream(file.uri)?.use { input ->
-                input.readBytes()
+            val bytes = withContext(Dispatchers.IO) {
+                resolver.openInputStream(file.uri)?.use { input -> input.readBytes() }
             } ?: error("Unable to read ${file.name}. Please choose the file again.")
             require(bytes.size <= 150L * 1024L * 1024L) { "${file.name} exceeds the 150 MB limit." }
             var lastError: Throwable? = null

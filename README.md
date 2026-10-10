@@ -31,6 +31,10 @@ Open the side menu from the User or Admin home screen:
 - **Need Help? • How To Use App** — step-by-step account, issue submission, required evidence, and chat instructions.
 - **Settings** — choose Violet, Ocean, Emerald, or Amber accent styling. Your choice is saved on this device.
 - **Sign out** — ends the current session and returns to the login screen. The same action is also available in Settings.
+- **Smart Diagnostic Report** — creates a reviewable text attachment with app version, Android/device details, SoC hints, available/total RAM when available, and fields to complete for Winlator/GameHub, driver, Wine, DXVK, VKD3D, and Box64. Android does not reliably expose the exact GPU model or emulator versions, so verify those manually.
+- **Automatic Log Collector** — creates an app-process log bundle. App logcat capture is off by default and must be enabled in Settings; Android may still restrict access. Common secret/token fields and email addresses can be redacted before upload.
+- **Reliable Upload Center** — shows per-file upload progress and retries failed uploads up to three attempts. If an additional-file upload fails, review the remaining selected files and retry; some earlier files may already have reached the server.
+- **Privacy & File Controls** — control device details, app-process logcat collection, and best-effort redaction. Review and remove selected attachments before submission; individual files over 150 MB are rejected.
 - **Mali Driver Developers** — opens the existing driver project links.
 
 ## 📘 How to use GMailGPU (step by step)

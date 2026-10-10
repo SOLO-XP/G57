@@ -20,6 +20,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
+import kotlinx.coroutines.launch
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -52,6 +53,8 @@ private val G57Cyan = Color(0xFF62D9FF)
 fun G57App(vm: G57ViewModel = viewModel()) {
     val ui by vm.ui.collectAsState()
     val context = LocalContext.current
+    val drawerState = rememberDrawerState(initialValue = DrawerValue.Closed)
+    val scope = rememberCoroutineScope()
 
     LaunchedEffect(ui.openUrl) {
         ui.openUrl?.let { url ->
@@ -64,27 +67,92 @@ fun G57App(vm: G57ViewModel = viewModel()) {
 
     BackHandler(enabled = ui.screen != ScreenState.Login) { vm.back() }
 
+    val accent = when (ui.themeChoice) {
+        "Ocean" -> Color(0xFF48B8E8)
+        "Emerald" -> Color(0xFF4ED6A0)
+        "Amber" -> Color(0xFFFFBD59)
+        else -> G57Primary
+    }
+    val secondary = when (ui.themeChoice) {
+        "Ocean" -> Color(0xFF8BE5FF)
+        "Emerald" -> Color(0xFF9AF5CB)
+        "Amber" -> Color(0xFFFFDE9A)
+        else -> G57Cyan
+    }
+
     MaterialTheme(
         colorScheme = darkColorScheme(
             background = G57Bg,
             surface = G57Card,
-            primary = G57Primary,
-            secondary = G57Cyan,
+            primary = accent,
+            secondary = secondary,
             onBackground = Color(0xFFF5F7FB),
             onSurface = Color(0xFFF5F7FB)
         )
     ) {
-        Box(Modifier.fillMaxSize().background(G57Bg)) {
-            when (val screen = ui.screen) {
-                ScreenState.Login -> LoginScreen(ui, vm)
-                ScreenState.UserHome -> UserHome(ui, vm)
-                ScreenState.CreateIssue -> CreateIssueScreen(ui, vm)
-                is ScreenState.UserIssue -> IssueDetails(screen.issue, ui, vm, admin = false)
-                ScreenState.AdminHome -> AdminHome(ui, vm)
-                ScreenState.AdminSolvedUsers -> AdminSolvedUsers(ui, vm)
-                ScreenState.AdminUserManagement -> AdminUserManagementScreen(ui, vm)
-                ScreenState.DriverDevelopers -> DriverDevelopersScreen(vm)
-                is ScreenState.AdminIssue -> IssueDetails(screen.issue, ui, vm, admin = true)
+        ModalNavigationDrawer(
+            drawerState = drawerState,
+            gesturesEnabled = ui.screen != ScreenState.Login,
+            drawerContent = {
+                if (ui.screen != ScreenState.Login) {
+                    ModalDrawerSheet(drawerContainerColor = G57Card, drawerContentColor = Color(0xFFF5F7FB)) {
+                        Text("GMailGPU", modifier = Modifier.padding(start = 22.dp, top = 24.dp, bottom = 4.dp), color = accent, style = MaterialTheme.typography.headlineSmall, fontWeight = FontWeight.ExtraBold)
+                        Text("Navigation", modifier = Modifier.padding(start = 22.dp, bottom = 18.dp), color = Color.Gray)
+                        NavigationDrawerItem(
+                            label = { Text("Home") },
+                            selected = ui.screen == ScreenState.UserHome || ui.screen == ScreenState.AdminHome,
+                            icon = { Icon(Icons.Default.Home, contentDescription = null) },
+                            onClick = { scope.launch { drawerState.close() }; vm.goHome() },
+                            modifier = Modifier.padding(NavigationDrawerItemDefaults.ItemPadding)
+                        )
+                        NavigationDrawerItem(
+                            label = { Text("Need Help? • How To Use App") },
+                            selected = ui.screen == ScreenState.Help,
+                            icon = { Icon(Icons.Default.HelpOutline, contentDescription = null) },
+                            onClick = { scope.launch { drawerState.close() }; vm.openHelp() },
+                            modifier = Modifier.padding(NavigationDrawerItemDefaults.ItemPadding)
+                        )
+                        NavigationDrawerItem(
+                            label = { Text("Settings") },
+                            selected = ui.screen == ScreenState.Settings,
+                            icon = { Icon(Icons.Default.Settings, contentDescription = null) },
+                            onClick = { scope.launch { drawerState.close() }; vm.openSettings() },
+                            modifier = Modifier.padding(NavigationDrawerItemDefaults.ItemPadding)
+                        )
+                        NavigationDrawerItem(
+                            label = { Text("Mali Driver Developers") },
+                            selected = ui.screen == ScreenState.DriverDevelopers,
+                            icon = { Icon(Icons.Default.Code, contentDescription = null) },
+                            onClick = { scope.launch { drawerState.close() }; vm.openDriverDevelopers() },
+                            modifier = Modifier.padding(NavigationDrawerItemDefaults.ItemPadding)
+                        )
+                        Spacer(Modifier.weight(1f))
+                        NavigationDrawerItem(
+                            label = { Text("Sign out") },
+                            selected = false,
+                            icon = { Icon(Icons.Default.Logout, contentDescription = null) },
+                            onClick = { scope.launch { drawerState.close() }; vm.logout() },
+                            modifier = Modifier.padding(NavigationDrawerItemDefaults.ItemPadding)
+                        )
+                        Spacer(Modifier.height(12.dp))
+                    }
+                }
+            }
+        ) {
+            Box(Modifier.fillMaxSize().background(G57Bg)) {
+                when (val screen = ui.screen) {
+                    ScreenState.Login -> LoginScreen(ui, vm)
+                    ScreenState.UserHome -> UserHome(ui, vm) { scope.launch { drawerState.open() } }
+                    ScreenState.CreateIssue -> CreateIssueScreen(ui, vm)
+                    is ScreenState.UserIssue -> IssueDetails(screen.issue, ui, vm, admin = false)
+                    ScreenState.AdminHome -> AdminHome(ui, vm) { scope.launch { drawerState.open() } }
+                    ScreenState.AdminSolvedUsers -> AdminSolvedUsers(ui, vm)
+                    ScreenState.AdminUserManagement -> AdminUserManagementScreen(ui, vm)
+                    ScreenState.DriverDevelopers -> DriverDevelopersScreen(vm)
+                    ScreenState.Help -> HelpScreen(vm)
+                    ScreenState.Settings -> SettingsScreen(ui, vm)
+                    is ScreenState.AdminIssue -> IssueDetails(screen.issue, ui, vm, admin = true)
+                }
             }
         }
     }
@@ -194,7 +262,7 @@ private fun RoleCard(title: String, subtitle: String, selected: Boolean, onClick
 }
 
 @Composable
-private fun UserHome(ui: UiState, vm: G57ViewModel) {
+private fun UserHome(ui: UiState, vm: G57ViewModel, onMenu: () -> Unit) {
     var shownNotification by remember(ui.profile?.id, ui.notifications) {
         mutableStateOf(ui.notifications.firstOrNull { it.readAt == null })
     }
@@ -202,7 +270,7 @@ private fun UserHome(ui: UiState, vm: G57ViewModel) {
         ui.profile?.id?.let(vm::loadUserData)
     }
     Column(Modifier.fillMaxSize()) {
-        BrandHeader("Your issues", onMenu = vm::openDriverDevelopers)
+        BrandHeader("Your issues", onMenu = onMenu)
         Row(Modifier.padding(horizontal = 20.dp), verticalAlignment = Alignment.CenterVertically) {
             Column(Modifier.weight(1f)) {
                 Text("Welcome, ${ui.profile?.username ?: ui.username}", style = MaterialTheme.typography.titleLarge)
@@ -237,10 +305,10 @@ private fun UserHome(ui: UiState, vm: G57ViewModel) {
 }
 
 @Composable
-private fun AdminHome(ui: UiState, vm: G57ViewModel) {
+private fun AdminHome(ui: UiState, vm: G57ViewModel, onMenu: () -> Unit) {
     LaunchedEffect(Unit) { vm.loadIssues(true) }
     Column(Modifier.fillMaxSize()) {
-        BrandHeader("ADMIN PANEL", onMenu = vm::openDriverDevelopers)
+        BrandHeader("ADMIN PANEL", onMenu = onMenu)
         Row(Modifier.padding(horizontal = 20.dp), verticalAlignment = Alignment.CenterVertically) {
             Column(Modifier.weight(1f)) {
                 Text("All Issues", style = MaterialTheme.typography.headlineSmall, fontWeight = FontWeight.Bold)
@@ -262,6 +330,88 @@ private fun AdminHome(ui: UiState, vm: G57ViewModel) {
         }
         Spacer(Modifier.height(12.dp))
         IssueList(ui.issues, vm::openAdminIssue, "No issues in Cloud.")
+    }
+}
+
+@Composable
+private fun HelpScreen(vm: G57ViewModel) {
+    Column(Modifier.fillMaxSize()) {
+        BrandHeader("Need Help? Follow These Steps • How To Use App") { vm.back() }
+        Column(
+            Modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(horizontal = 20.dp, vertical = 8.dp),
+            verticalArrangement = Arrangement.spacedBy(14.dp)
+        ) {
+            HelpStep("1. Create your account", "Choose USER, enter a unique username and a password with at least 8 characters, then tap CREATE ACCOUNT. Use SIGN IN for an existing account.")
+            HelpStep("2. Open a new issue", "Tap CREATE ISSUE and enter the game, issue title, and a clear description. Write the title and description in English.")
+            HelpStep("3. Attach required evidence", "Attach at least one diagnostic log file OR one video showing the problem. Images alone are not enough. The app blocks submission until a log or video is selected.")
+            HelpStep("4. Submit and track", "Tap SUBMIT ISSUE and wait for confirmation. Open Your issues to check the status and details.")
+            HelpStep("5. Talk to the developer", "Open your issue, scroll to the chat section, write a message, and tap SEND MESSAGE. Tap REFRESH CHAT to check for replies.")
+            HelpStep("6. Add missing files later", "Inside your issue, use ADD MORE FILES and UPLOAD FILES TO THIS ISSUE to send extra logs, videos, or screenshots.")
+            HelpStep("7. Protect your account", "Keep your password safe. Use Sign out from the side menu when you want to end your session.")
+            Button(onClick = { vm.openCreate() }, modifier = Modifier.fillMaxWidth()) {
+                Icon(Icons.Default.Add, contentDescription = null)
+                Spacer(Modifier.width(8.dp))
+                Text("CREATE ISSUE")
+            }
+        }
+    }
+}
+
+@Composable
+private fun HelpStep(title: String, body: String) {
+    ElevatedCard(
+        modifier = Modifier.fillMaxWidth(),
+        colors = CardDefaults.elevatedCardColors(containerColor = G57Card),
+        shape = RoundedCornerShape(16.dp)
+    ) {
+        Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(6.dp)) {
+            Text(title, color = G57Cyan, fontWeight = FontWeight.Bold)
+            Text(body, color = Color(0xFFF5F7FB))
+        }
+    }
+}
+
+@Composable
+private fun SettingsScreen(ui: UiState, vm: G57ViewModel) {
+    Column(Modifier.fillMaxSize()) {
+        BrandHeader("Settings") { vm.back() }
+        Column(
+            Modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(horizontal = 20.dp),
+            verticalArrangement = Arrangement.spacedBy(16.dp)
+        ) {
+            Text("APP APPEARANCE", color = G57Cyan, fontWeight = FontWeight.Bold)
+            Text("Choose an accent style for buttons, selected controls, and other theme-aware UI elements. Your choice is saved on this device.", color = Color.Gray)
+            listOf(
+                "Violet" to Color(0xFF9B7BFF),
+                "Ocean" to Color(0xFF48B8E8),
+                "Emerald" to Color(0xFF4ED6A0),
+                "Amber" to Color(0xFFFFBD59)
+            ).forEach { (name, color) ->
+                Surface(
+                    onClick = { vm.setThemeChoice(name) },
+                    color = G57Card,
+                    shape = RoundedCornerShape(14.dp),
+                    border = androidx.compose.foundation.BorderStroke(
+                        if (ui.themeChoice == name) 2.dp else 1.dp,
+                        if (ui.themeChoice == name) color else Color(0xFF303746)
+                    ),
+                    modifier = Modifier.fillMaxWidth()
+                ) {
+                    Row(Modifier.padding(16.dp), verticalAlignment = Alignment.CenterVertically) {
+                        Surface(color = color, shape = RoundedCornerShape(50), modifier = Modifier.size(24.dp)) {}
+                        Spacer(Modifier.width(12.dp))
+                        Text(name, modifier = Modifier.weight(1f), fontWeight = FontWeight.SemiBold)
+                        if (ui.themeChoice == name) Icon(Icons.Default.CheckCircle, contentDescription = "Selected", tint = color)
+                    }
+                }
+            }
+            Text("Theme changes apply immediately and remain saved after restarting the app.", color = Color.Gray, style = MaterialTheme.typography.bodySmall)
+            OutlinedButton(onClick = { vm.logout() }, modifier = Modifier.fillMaxWidth()) {
+                Icon(Icons.Default.Logout, contentDescription = null)
+                Spacer(Modifier.width(8.dp))
+                Text("SIGN OUT")
+            }
+        }
     }
 }
 

@@ -23,6 +23,8 @@ sealed interface ScreenState {
     data object AdminSolvedUsers : ScreenState
     data object AdminUserManagement : ScreenState
     data object DriverDevelopers : ScreenState
+    data object Help : ScreenState
+    data object Settings : ScreenState
     data class AdminIssue(val issue: Issue) : ScreenState
 }
 
@@ -43,6 +45,7 @@ data class ResolvedUser(
 
 data class UiState(
     val screen: ScreenState = ScreenState.Login,
+    val themeChoice: String = "Violet",
     val username: String = "",
     val password: String = "",
     val loginRole: String = "user",
@@ -81,6 +84,7 @@ class G57ViewModel(app: Application) : AndroidViewModel(app) {
     val ui: StateFlow<UiState> = _ui.asStateFlow()
 
     init {
+        _ui.value = _ui.value.copy(themeChoice = getApplication<Application>().getSharedPreferences("gmailgpu_settings", 0).getString("theme_choice", "Violet") ?: "Violet")
         restoreSession()
     }
 
@@ -217,6 +221,16 @@ class G57ViewModel(app: Application) : AndroidViewModel(app) {
     }
 
     fun openDriverDevelopers() = update { copy(screen = ScreenState.DriverDevelopers, error = null) }
+    fun openHelp() = update { copy(screen = ScreenState.Help, error = null) }
+    fun openSettings() = update { copy(screen = ScreenState.Settings, error = null) }
+    fun goHome() = update {
+        copy(screen = if (profile?.role == "admin") ScreenState.AdminHome else ScreenState.UserHome, error = null)
+    }
+    fun setThemeChoice(value: String) {
+        if (value !in setOf("Violet", "Ocean", "Emerald", "Amber")) return
+        getApplication<Application>().getSharedPreferences("gmailgpu_settings", 0).edit().putString("theme_choice", value).apply()
+        update { copy(themeChoice = value) }
+    }
 
     fun openExternalUrl(url: String) = update { copy(openUrl = url) }
 
@@ -546,7 +560,8 @@ class G57ViewModel(app: Application) : AndroidViewModel(app) {
 
     fun logout() = viewModelScope.launch {
         if (SupabaseProvider.enabled) runCatching { repo.signOut() }
-        _ui.value = UiState()
+        val savedTheme = getApplication<Application>().getSharedPreferences("gmailgpu_settings", 0).getString("theme_choice", "Violet") ?: "Violet"
+        _ui.value = UiState(themeChoice = savedTheme)
     }
 
     private fun updateIssueInMemory(issueId: String, status: String) {

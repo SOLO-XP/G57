@@ -247,7 +247,7 @@ class G57ViewModel(app: Application) : AndroidViewModel(app) {
         copy(screen = if (profile?.role == "admin") ScreenState.AdminHome else ScreenState.UserHome, error = null)
     }
     fun setThemeChoice(value: String) {
-        if (value !in setOf("Violet", "Ocean", "Emerald", "Amber")) return
+        if (value !in setOf("Violet", "Ocean", "Emerald", "Amber", "Rose", "Light")) return
         getApplication<Application>().getSharedPreferences("gmailgpu_settings", 0).edit().putString("theme_choice", value).apply()
         update { copy(themeChoice = value) }
     }

@@ -440,7 +440,7 @@ class G57ViewModel(app: Application) : AndroidViewModel(app) {
         }.onFailure { e -> update { copy(loading = false, uploadProgress = null, error = e.message ?: "Submission failed") } }
     }
 
-    private suspend fun uploadFiles(issueId: String, files: List<PickedFile>) {
+    private suspend fun uploadFiles(issueId: String, files: List<PickedFile>, onFileUploaded: ((PickedFile) -> Unit)? = null) {
         val resolver = getApplication<Application>().contentResolver
         files.forEachIndexed { index, file ->
             val bytes = resolver.openInputStream(file.uri)?.use { input ->
@@ -452,6 +452,7 @@ class G57ViewModel(app: Application) : AndroidViewModel(app) {
                 update { copy(uploadProgress = "Uploading ${index + 1}/${files.size}: ${file.name} (attempt $attempt/3)") }
                 try {
                     repo.uploadAttachment(issueId, file.name, file.mime, bytes, file.type)
+                    onFileUploaded?.invoke(file)
                     lastError = null
                     break
                 } catch (e: Throwable) {
@@ -501,7 +502,9 @@ class G57ViewModel(app: Application) : AndroidViewModel(app) {
         }
         update { copy(loading = true, error = null, success = null, uploadProgress = "Preparing upload…") }
         runCatching {
-            uploadFiles(issueId, files)
+            uploadFiles(issueId, files) { uploaded ->
+                update { copy(selectedFiles = selectedFiles.filterNot { it.uri == uploaded.uri }) }
+            }
             repo.attachments(issueId)
         }.onSuccess { refreshed ->
             update {

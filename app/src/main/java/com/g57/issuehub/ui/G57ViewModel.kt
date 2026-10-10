@@ -308,6 +308,10 @@ class G57ViewModel(app: Application) : AndroidViewModel(app) {
             update { copy(error = "Title, game, and description are required.") }
             return@launch
         }
+        if (s.selectedFiles.none { it.type == "log" || it.type == "video" }) {
+            update { copy(error = "A diagnostic log file or a video is required. Images alone are not enough. Attach the evidence and try again.") }
+            return@launch
+        }
         if (!SupabaseProvider.enabled) {
             update {
                 copy(

@@ -52,13 +52,13 @@ private val LocalG57Palette = compositionLocalOf {
     G57Palette(Color(0xFF080A0F), Color(0xFF121722), Color(0xFF9B7BFF), Color(0xFF62D9FF),
         Color(0xFFF5F7FB), Color(0xFF9AA4B5), Color(0xFF303746))
 }
-private val G57Bg get() = LocalG57Palette.current.background
-private val G57Card get() = LocalG57Palette.current.surface
-private val G57Primary get() = LocalG57Palette.current.primary
-private val G57Cyan get() = LocalG57Palette.current.secondary
-private val G57Text get() = LocalG57Palette.current.text
-private val G57Muted get() = LocalG57Palette.current.muted
-private val G57Border get() = LocalG57Palette.current.border
+private val G57Bg: Color @Composable get() = LocalG57Palette.current.background
+private val G57Card: Color @Composable get() = LocalG57Palette.current.surface
+private val G57Primary: Color @Composable get() = LocalG57Palette.current.primary
+private val G57Cyan: Color @Composable get() = LocalG57Palette.current.secondary
+private val G57Text: Color @Composable get() = LocalG57Palette.current.text
+private val G57Muted: Color @Composable get() = LocalG57Palette.current.muted
+private val G57Border: Color @Composable get() = LocalG57Palette.current.border
 
 private fun g57Palette(choice: String): G57Palette = when (choice) {
     "Ocean" -> G57Palette(Color(0xFF061923), Color(0xFF0D2938), Color(0xFF48B8E8), Color(0xFF8BE5FF), Color(0xFFEAF9FF), Color(0xFF91B6C7), Color(0xFF245064))
@@ -108,7 +108,7 @@ fun G57App(vm: G57ViewModel = viewModel()) {
             drawerContent = {
                 if (ui.screen != ScreenState.Login) {
                     ModalDrawerSheet(drawerContainerColor = G57Card, drawerContentColor = G57Text) {
-                        Text("GMailGPU", modifier = Modifier.padding(start = 22.dp, top = 24.dp, bottom = 4.dp), color = accent, style = MaterialTheme.typography.headlineSmall, fontWeight = FontWeight.ExtraBold)
+                        Text("GMailGPU", modifier = Modifier.padding(start = 22.dp, top = 24.dp, bottom = 4.dp), color = G57Primary, style = MaterialTheme.typography.headlineSmall, fontWeight = FontWeight.ExtraBold)
                         Text("Navigation", modifier = Modifier.padding(start = 22.dp, bottom = 18.dp), color = G57Muted)
                         NavigationDrawerItem(
                             label = { Text("Home") },
@@ -452,7 +452,6 @@ private fun SettingsScreen(ui: UiState, vm: G57ViewModel) {
                 Text("SIGN OUT")
             }
         }
-    }
     }
 }
 

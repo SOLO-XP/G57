@@ -44,10 +44,30 @@ class MainActivity : ComponentActivity() {
     }
 }
 
-private val G57Bg = Color(0xFF080A0F)
-private val G57Card = Color(0xFF121722)
-private val G57Primary = Color(0xFF9B7BFF)
-private val G57Cyan = Color(0xFF62D9FF)
+private data class G57Palette(
+    val background: Color, val surface: Color, val primary: Color, val secondary: Color,
+    val text: Color, val muted: Color, val border: Color, val light: Boolean = false
+)
+private val LocalG57Palette = compositionLocalOf {
+    G57Palette(Color(0xFF080A0F), Color(0xFF121722), Color(0xFF9B7BFF), Color(0xFF62D9FF),
+        Color(0xFFF5F7FB), Color(0xFF9AA4B5), Color(0xFF303746))
+}
+private val G57Bg get() = LocalG57Palette.current.background
+private val G57Card get() = LocalG57Palette.current.surface
+private val G57Primary get() = LocalG57Palette.current.primary
+private val G57Cyan get() = LocalG57Palette.current.secondary
+private val G57Text get() = LocalG57Palette.current.text
+private val G57Muted get() = LocalG57Palette.current.muted
+private val G57Border get() = LocalG57Palette.current.border
+
+private fun g57Palette(choice: String): G57Palette = when (choice) {
+    "Ocean" -> G57Palette(Color(0xFF061923), Color(0xFF0D2938), Color(0xFF48B8E8), Color(0xFF8BE5FF), Color(0xFFEAF9FF), Color(0xFF91B6C7), Color(0xFF245064))
+    "Emerald" -> G57Palette(Color(0xFF071A14), Color(0xFF102B20), Color(0xFF4ED6A0), Color(0xFF9AF5CB), Color(0xFFE9FFF5), Color(0xFF96BDAA), Color(0xFF285641))
+    "Amber" -> G57Palette(Color(0xFF1B1408), Color(0xFF302312), Color(0xFFFFBD59), Color(0xFFFFDE9A), Color(0xFFFFF7E8), Color(0xFFC6B28F), Color(0xFF5B4528))
+    "Rose" -> G57Palette(Color(0xFF1D0B14), Color(0xFF321321), Color(0xFFFF78AC), Color(0xFFFFB6D0), Color(0xFFFFF0F6), Color(0xFFC8A0B1), Color(0xFF633047))
+    "Light" -> G57Palette(Color(0xFFF3F5FA), Color(0xFFFFFFFF), Color(0xFF6750A4), Color(0xFF356A9A), Color(0xFF171923), Color(0xFF5E6573), Color(0xFFD8DDE7), light = true)
+    else -> G57Palette(Color(0xFF080A0F), Color(0xFF121722), Color(0xFF9B7BFF), Color(0xFF62D9FF), Color(0xFFF5F7FB), Color(0xFF9AA4B5), Color(0xFF303746))
+}
 
 @Composable
 fun G57App(vm: G57ViewModel = viewModel()) {
@@ -67,37 +87,29 @@ fun G57App(vm: G57ViewModel = viewModel()) {
 
     BackHandler(enabled = ui.screen != ScreenState.Login) { vm.back() }
 
-    val accent = when (ui.themeChoice) {
-        "Ocean" -> Color(0xFF48B8E8)
-        "Emerald" -> Color(0xFF4ED6A0)
-        "Amber" -> Color(0xFFFFBD59)
-        else -> G57Primary
-    }
-    val secondary = when (ui.themeChoice) {
-        "Ocean" -> Color(0xFF8BE5FF)
-        "Emerald" -> Color(0xFF9AF5CB)
-        "Amber" -> Color(0xFFFFDE9A)
-        else -> G57Cyan
-    }
+    val palette = g57Palette(ui.themeChoice)
+    LaunchedEffect(ui.screen) { drawerState.close() }
 
+    CompositionLocalProvider(LocalG57Palette provides palette) {
     MaterialTheme(
-        colorScheme = darkColorScheme(
-            background = G57Bg,
-            surface = G57Card,
-            primary = accent,
-            secondary = secondary,
-            onBackground = Color(0xFFF5F7FB),
-            onSurface = Color(0xFFF5F7FB)
+        colorScheme = if (palette.light) lightColorScheme(
+            background = palette.background, surface = palette.surface, primary = palette.primary,
+            secondary = palette.secondary, onBackground = palette.text, onSurface = palette.text,
+            onPrimary = Color.White, outline = palette.border
+        ) else darkColorScheme(
+            background = palette.background, surface = palette.surface, primary = palette.primary,
+            secondary = palette.secondary, onBackground = palette.text, onSurface = palette.text,
+            onPrimary = Color(0xFF080A0F), outline = palette.border
         )
     ) {
         ModalNavigationDrawer(
             drawerState = drawerState,
-            gesturesEnabled = ui.screen != ScreenState.Login,
+            gesturesEnabled = false,
             drawerContent = {
                 if (ui.screen != ScreenState.Login) {
                     ModalDrawerSheet(drawerContainerColor = G57Card, drawerContentColor = Color(0xFFF5F7FB)) {
                         Text("GMailGPU", modifier = Modifier.padding(start = 22.dp, top = 24.dp, bottom = 4.dp), color = accent, style = MaterialTheme.typography.headlineSmall, fontWeight = FontWeight.ExtraBold)
-                        Text("Navigation", modifier = Modifier.padding(start = 22.dp, bottom = 18.dp), color = Color.Gray)
+                        Text("Navigation", modifier = Modifier.padding(start = 22.dp, bottom = 18.dp), color = G57Muted)
                         NavigationDrawerItem(
                             label = { Text("Home") },
                             selected = ui.screen == ScreenState.UserHome || ui.screen == ScreenState.AdminHome,
@@ -380,12 +392,14 @@ private fun SettingsScreen(ui: UiState, vm: G57ViewModel) {
             verticalArrangement = Arrangement.spacedBy(16.dp)
         ) {
             Text("APP APPEARANCE", color = G57Cyan, fontWeight = FontWeight.Bold)
-            Text("Choose an accent style for buttons, selected controls, and other theme-aware UI elements. Your choice is saved on this device.", color = Color.Gray)
+            Text("Choose a complete app theme. Backgrounds, cards, text, borders, and accent colors change together. Your choice is saved on this device.", color = G57Muted)
             listOf(
                 "Violet" to Color(0xFF9B7BFF),
                 "Ocean" to Color(0xFF48B8E8),
                 "Emerald" to Color(0xFF4ED6A0),
-                "Amber" to Color(0xFFFFBD59)
+                "Amber" to Color(0xFFFFBD59),
+                "Rose" to Color(0xFFFF78AC),
+                "Light" to Color(0xFF6750A4)
             ).forEach { (name, color) ->
                 Card(
                     onClick = { vm.setThemeChoice(name) },
@@ -405,7 +419,7 @@ private fun SettingsScreen(ui: UiState, vm: G57ViewModel) {
                     }
                 }
             }
-            Text("Theme changes apply immediately and remain saved after restarting the app.", color = Color.Gray, style = MaterialTheme.typography.bodySmall)
+            Text("Theme changes apply across the whole app immediately and remain saved after restarting.", color = G57Muted, style = MaterialTheme.typography.bodySmall)
             Divider(color = Color(0xFF303746))
             Text("PRIVACY & FILE CONTROLS", color = G57Cyan, fontWeight = FontWeight.Bold)
             Text("These preferences stay on this device. Nothing is uploaded until you attach a file to an issue and submit it.", color = Color.Gray, style = MaterialTheme.typography.bodySmall)
@@ -437,6 +451,7 @@ private fun SettingsScreen(ui: UiState, vm: G57ViewModel) {
                 Text("SIGN OUT")
             }
         }
+    }
     }
 }
 

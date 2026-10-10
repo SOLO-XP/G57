@@ -84,9 +84,11 @@ object DiagnosticCollector {
         return writeFile(context, "gmailgpu-diagnostic-report.txt", report, "text/plain", "log")
     }
 
-    fun createLogBundle(context: Context, redactSensitive: Boolean): PickedFile {
+    fun createLogBundle(context: Context, redactSensitive: Boolean, includeAppLogcat: Boolean): PickedFile {
         val snapshot = snapshot(context)
-        val processLog = runCatching {
+        val processLog = if (!includeAppLogcat) {
+            "App-process logcat collection is disabled in Privacy & File Controls.\n"
+        } else runCatching {
             val process = ProcessBuilder("logcat", "-d", "-t", "500", "--pid=${Process.myPid()}")
                 .redirectErrorStream(true).start()
             val output = process.inputStream.bufferedReader().use { it.readText() }
@@ -102,7 +104,7 @@ object DiagnosticCollector {
             appendLine("Android: ${snapshot.androidVersion}")
             appendLine("SoC: ${snapshot.soc}")
             appendLine("GPU: ${snapshot.gpu}")
-            appendLine("Log scope: this app process only; Android may restrict log access.")
+            appendLine("Log scope: this app process only; Android may restrict log access.")\n            appendLine("App logcat collection enabled: $includeAppLogcat")
             appendLine("Sensitive-data redaction: ${if (redactSensitive) "enabled" else "disabled"}")
             appendLine()
             appendLine("----- APP LOGCAT (best effort) -----")

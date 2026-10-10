@@ -25,6 +25,14 @@
 
 > GPU categories are available for issue reporting. This does not guarantee that every listed GPU has a working custom driver.
 
+## 🧭 Help, Settings, and Sign out
+
+Open the side menu from the User or Admin home screen:
+- **Need Help? • How To Use App** — step-by-step account, issue submission, required evidence, and chat instructions.
+- **Settings** — choose Violet, Ocean, Emerald, or Amber accent styling. Your choice is saved on this device.
+- **Sign out** — ends the current session and returns to the login screen. The same action is also available in Settings.
+- **Mali Driver Developers** — opens the existing driver project links.
+
 ## 📘 How to use GMailGPU (step by step)
 
 New here? Follow this guide from account creation to sending your first issue.

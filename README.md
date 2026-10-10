@@ -53,8 +53,9 @@ Use **CREATE ACCOUNT** only when registering for the first time. If you already 
 3. Enter the **Game** name.
 4. In **Description**, explain exactly what happens and how to reproduce it. Include any error message and what you expected to happen.
 5. Choose the relevant **Problem Type** and fill in any other details you know, such as driver, emulator, game version, DXVK, Wine, VKD3D, or Box64. If you do not know a version, do not guess.
-6. If useful, attach screenshots, videos, or log files using the file picker before submitting.
-7. Tap the issue submission button and wait for the confirmation that your issue was submitted.
+6. **Required evidence:** attach at least one diagnostic log file OR one video showing the problem. Screenshots alone do not meet this requirement. The app will block submission if neither a log nor a video is attached.
+7. Write the issue title and description in **English only**, including the exact error and steps to reproduce the problem.
+8. Tap the issue submission button and wait for the confirmation that your issue was submitted.
 
 **Tips for a useful report:** mention your phone model, Android version, Mali GPU, game name, driver/emulator versions, FPS or symptoms, and steps that reproduce the problem. Hide passwords, access tokens, and other private information from logs or screenshots.
 

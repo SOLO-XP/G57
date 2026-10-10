@@ -62,7 +62,7 @@ object DiagnosticCollector {
         }
         val version = runCatching {
             val info = if (Build.VERSION.SDK_INT >= 33) context.packageManager.getPackageInfo(context.packageName, android.content.pm.PackageManager.PackageInfoFlags.of(0))
-                else @Suppress("DEPRECATION") context.packageManager.getPackageInfo(context.packageName, 0)
+                else context.packageManager.getPackageInfo(context.packageName, 0)
             "${info.versionName ?: "unknown"} (${info.longVersionCode})"
         }.getOrDefault("unknown")
         return DeviceSnapshot(

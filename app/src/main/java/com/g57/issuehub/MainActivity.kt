@@ -777,7 +777,7 @@ private fun CreateIssueScreen(ui: UiState, vm: G57ViewModel) {
                     Text("SMART REPORT")
                 }
                 OutlinedButton(onClick = vm::collectAppLogs, enabled = !ui.loading, modifier = Modifier.weight(1f)) {
-                    Icon(Icons.Default.Terminal, contentDescription = null)
+                    Icon(Icons.Default.BugReport, contentDescription = null)
                     Spacer(Modifier.width(6.dp))
                     Text("COLLECT LOGS")
                 }

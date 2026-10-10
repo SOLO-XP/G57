@@ -559,7 +559,7 @@ private fun CreateIssueScreen(ui: UiState, vm: G57ViewModel) {
             OutlinedTextField(ui.title, { vm.setField("title", it) }, label = { Text("Issue title") }, modifier = Modifier.fillMaxWidth())
             OutlinedTextField(ui.game, { vm.setField("game", it) }, label = { Text("Game") }, modifier = Modifier.fillMaxWidth())
             OutlinedTextField(ui.gameVersion, { vm.setField("gameVersion", it) }, label = { Text("Game version (optional)") }, modifier = Modifier.fillMaxWidth())
-            OutlinedTextField(ui.description, { vm.setField("description", it) }, label = { Text("Describe the problem") }, minLines = 6, modifier = Modifier.fillMaxWidth())
+            OutlinedTextField(ui.description, { vm.setField("description", it) }, label = { Text("Describe the problem (English only)") }, supportingText = { Text("Write the steps, exact error message, and expected result in English.") }, minLines = 6, modifier = Modifier.fillMaxWidth())
             Text("Problem type", color = Color.Gray)
             Row(horizontalArrangement = Arrangement.spacedBy(8.dp), modifier = Modifier.fillMaxWidth().horizontalScroll(rememberScrollState()).padding(bottom = 4.dp)) {
                 listOf("Crash", "Black Screen", "Graphics", "Performance", "Vulkan Error", "Other").forEach { type ->
@@ -576,8 +576,18 @@ private fun CreateIssueScreen(ui: UiState, vm: G57ViewModel) {
             OutlinedTextField(ui.vkd3d, { vm.setField("vkd3d", it) }, label = { Text("VKD3D") }, modifier = Modifier.fillMaxWidth())
             OutlinedTextField(ui.box64, { vm.setField("box64", it) }, label = { Text("Box64") }, modifier = Modifier.fillMaxWidth())
 
-            Text("ATTACHMENTS", color = G57Cyan, fontWeight = FontWeight.Bold, modifier = Modifier.padding(top = 8.dp))
-            Text("Maximum 150 MB per file in this MVP.", color = Color.Gray, style = MaterialTheme.typography.bodySmall)
+            Text("ATTACHMENTS • REQUIRED", color = G57Cyan, fontWeight = FontWeight.Bold, modifier = Modifier.padding(top = 8.dp))
+            Text(
+                "You must attach at least one diagnostic log file OR one video showing the problem. Images alone are not enough. Please write all issue details in English. Maximum 150 MB per file.",
+                color = Color.Gray,
+                style = MaterialTheme.typography.bodySmall
+            )
+            val hasRequiredEvidence = ui.selectedFiles.any { it.type == "log" || it.type == "video" }
+            Text(
+                if (hasRequiredEvidence) "Required evidence selected." else "Missing required evidence: choose a log file or a video.",
+                color = if (hasRequiredEvidence) G57Cyan else MaterialTheme.colorScheme.error,
+                style = MaterialTheme.typography.labelMedium
+            )
             Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                 OutlinedButton(onClick = { imagePicker.launch(arrayOf("image/*")) }, modifier = Modifier.weight(1f)) { Text("📷 Images") }
                 OutlinedButton(onClick = { videoPicker.launch(arrayOf("video/*")) }, modifier = Modifier.weight(1f)) { Text("🎥 Video") }

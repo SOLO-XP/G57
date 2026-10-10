@@ -742,6 +742,8 @@ private fun CreateIssueScreen(ui: UiState, vm: G57ViewModel) {
                 }
             }
             Text("ENVIRONMENT", color = G57Cyan, fontWeight = FontWeight.Bold, modifier = Modifier.padding(top = 8.dp))
+            OutlinedTextField(ui.gpu, { vm.setField("gpu", it) }, label = { Text("GPU model (verify auto-detection)") }, modifier = Modifier.fillMaxWidth())
+            OutlinedTextField(ui.soc, { vm.setField("soc", it) }, label = { Text("SoC / chipset") }, modifier = Modifier.fillMaxWidth())
             OutlinedTextField(ui.driver, { vm.setField("driver", it) }, label = { Text("Driver") }, modifier = Modifier.fillMaxWidth())
             OutlinedTextField(ui.emulator, { vm.setField("emulator", it) }, label = { Text("Emulator") }, modifier = Modifier.fillMaxWidth())
             OutlinedTextField(ui.emulatorVersion, { vm.setField("emulatorVersion", it) }, label = { Text("Emulator version") }, modifier = Modifier.fillMaxWidth())

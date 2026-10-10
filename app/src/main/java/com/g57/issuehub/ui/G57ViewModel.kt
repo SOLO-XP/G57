@@ -367,6 +367,8 @@ class G57ViewModel(app: Application) : AndroidViewModel(app) {
         copy(selectedFiles = selectedFiles.toMutableList().apply { removeAt(index) })
     }
 
+    fun clearSelectedFiles() = update { copy(selectedFiles = emptyList(), success = "Selected attachments cleared.", error = null) }
+
     fun submitIssue() = viewModelScope.launch {
         val s = _ui.value
         if (s.title.isBlank() || s.game.isBlank() || s.description.isBlank()) {

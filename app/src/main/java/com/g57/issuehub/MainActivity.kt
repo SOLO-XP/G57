@@ -406,6 +406,31 @@ private fun SettingsScreen(ui: UiState, vm: G57ViewModel) {
                 }
             }
             Text("Theme changes apply immediately and remain saved after restarting the app.", color = Color.Gray, style = MaterialTheme.typography.bodySmall)
+            Divider(color = Color(0xFF303746))
+            Text("PRIVACY & FILE CONTROLS", color = G57Cyan, fontWeight = FontWeight.Bold)
+            Text("These preferences stay on this device. Nothing is uploaded until you attach a file to an issue and submit it.", color = Color.Gray, style = MaterialTheme.typography.bodySmall)
+            Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
+                Column(Modifier.weight(1f)) {
+                    Text("Include device details in reports", fontWeight = FontWeight.SemiBold)
+                    Text("Model, Android version, SoC and available memory when Android exposes them.", color = Color.Gray, style = MaterialTheme.typography.bodySmall)
+                }
+                Checkbox(checked = ui.includeDeviceDiagnostics, onCheckedChange = vm::setIncludeDeviceDiagnostics)
+            }
+            Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
+                Column(Modifier.weight(1f)) {
+                    Text("Allow app-process logcat collection", fontWeight = FontWeight.SemiBold)
+                    Text("Off by default. Only this app process is requested; Android may restrict access.", color = Color.Gray, style = MaterialTheme.typography.bodySmall)
+                }
+                Checkbox(checked = ui.collectAppLogsEnabled, onCheckedChange = vm::setCollectAppLogsEnabled)
+            }
+            Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
+                Column(Modifier.weight(1f)) {
+                    Text("Redact likely sensitive data", fontWeight = FontWeight.SemiBold)
+                    Text("Masks common token/password fields and email addresses in collected logs.", color = Color.Gray, style = MaterialTheme.typography.bodySmall)
+                }
+                Checkbox(checked = ui.redactSensitiveLogs, onCheckedChange = vm::setRedactSensitiveLogs)
+            }
+            Text("Review every report or log file before uploading. Redaction is best-effort and may not catch every secret.", color = Color.Gray, style = MaterialTheme.typography.bodySmall)
             OutlinedButton(onClick = { vm.logout() }, modifier = Modifier.fillMaxWidth()) {
                 Icon(Icons.Default.Logout, contentDescription = null)
                 Spacer(Modifier.width(8.dp))
@@ -743,6 +768,26 @@ private fun CreateIssueScreen(ui: UiState, vm: G57ViewModel) {
                 OutlinedButton(onClick = { videoPicker.launch(arrayOf("video/*")) }, modifier = Modifier.weight(1f)) { Text("🎥 Video") }
                 OutlinedButton(onClick = { logPicker.launch(arrayOf("text/*", "application/zip", "application/octet-stream", "application/json")) }, modifier = Modifier.weight(1f)) { Text("📄 Logs") }
             }
+            Row(horizontalArrangement = Arrangement.spacedBy(8.dp), modifier = Modifier.fillMaxWidth()) {
+                OutlinedButton(onClick = vm::generateDiagnosticReport, enabled = !ui.loading, modifier = Modifier.weight(1f)) {
+                    Icon(Icons.Default.Assignment, contentDescription = null)
+                    Spacer(Modifier.width(6.dp))
+                    Text("SMART REPORT")
+                }
+                OutlinedButton(onClick = vm::collectAppLogs, enabled = !ui.loading, modifier = Modifier.weight(1f)) {
+                    Icon(Icons.Default.Terminal, contentDescription = null)
+                    Spacer(Modifier.width(6.dp))
+                    Text("COLLECT LOGS")
+                }
+            }
+            Text("Generated files are added to the attachment list so you can review and remove them before upload. App logcat collection is controlled in Settings.", color = Color.Gray, style = MaterialTheme.typography.bodySmall)
+            if (ui.selectedFiles.isNotEmpty()) {
+                OutlinedButton(onClick = vm::clearSelectedFiles, enabled = !ui.loading, modifier = Modifier.fillMaxWidth()) {
+                    Icon(Icons.Default.DeleteSweep, contentDescription = null)
+                    Spacer(Modifier.width(6.dp))
+                    Text("CLEAR ALL SELECTED FILES")
+                }
+            }
             ui.selectedFiles.forEachIndexed { index, file ->
                 Surface(color = G57Card, shape = RoundedCornerShape(12.dp), modifier = Modifier.fillMaxWidth()) {
                     Row(Modifier.padding(12.dp), verticalAlignment = Alignment.CenterVertically) {
@@ -752,6 +797,7 @@ private fun CreateIssueScreen(ui: UiState, vm: G57ViewModel) {
                     }
                 }
             }
+            ui.uploadProgress?.let { Text(it, color = G57Cyan, style = MaterialTheme.typography.bodySmall) }
             ui.success?.let { Text(it, color = G57Cyan) }
             ui.error?.let { Text(it, color = MaterialTheme.colorScheme.error) }
             Button(vm::submitIssue, enabled = !ui.loading, modifier = Modifier.fillMaxWidth().padding(vertical = 10.dp)) { Text(if (ui.loading) "UPLOADING…" else "SUBMIT ISSUE") }
@@ -847,6 +893,7 @@ private fun IssueDetails(issue: Issue, ui: UiState, vm: G57ViewModel, admin: Boo
                     Spacer(Modifier.width(8.dp))
                     Text(if (ui.loading) "UPLOADING…" else "UPLOAD FILES TO THIS ISSUE")
                 }
+                ui.uploadProgress?.let { Text(it, color = G57Cyan, style = MaterialTheme.typography.bodySmall) }
                 ui.success?.let { Text(it, color = G57Cyan) }
                 ui.error?.let { Text(it, color = MaterialTheme.colorScheme.error) }
             }
@@ -1004,7 +1051,11 @@ private fun readPickedFiles(uris: List<android.net.Uri>, type: String, context: 
                 if (sizeIndex >= 0 && !cursor.isNull(sizeIndex)) size = cursor.getLong(sizeIndex)
             }
         }
-        if (size <= 150L * 1024L * 1024L) result += PickedFile(uri, name, mime, type, size)
+        if (size <= 150L * 1024L * 1024L) {
+            result += PickedFile(uri, name, mime, type, size)
+        } else {
+            android.widget.Toast.makeText(context, "$name exceeds the 150 MB file limit and was not added.", android.widget.Toast.LENGTH_LONG).show()
+        }
     }
     return result
 }

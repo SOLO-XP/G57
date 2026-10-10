@@ -387,9 +387,9 @@ private fun SettingsScreen(ui: UiState, vm: G57ViewModel) {
                 "Emerald" to Color(0xFF4ED6A0),
                 "Amber" to Color(0xFFFFBD59)
             ).forEach { (name, color) ->
-                Surface(
+                Card(
                     onClick = { vm.setThemeChoice(name) },
-                    color = G57Card,
+                    colors = CardDefaults.cardColors(containerColor = G57Card),
                     shape = RoundedCornerShape(14.dp),
                     border = androidx.compose.foundation.BorderStroke(
                         if (ui.themeChoice == name) 2.dp else 1.dp,
